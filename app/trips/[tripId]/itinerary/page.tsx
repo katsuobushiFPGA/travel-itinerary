@@ -1,7 +1,41 @@
-export default function ItineraryPage() {
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { tripDurationDays } from "@/lib/date-utils";
+import { CreateItineraryDialog } from "@/components/itinerary/itinerary-form";
+import { ItineraryDaySection } from "@/components/itinerary/itinerary-day-section";
+
+export default async function ItineraryPage({
+  params,
+}: {
+  params: Promise<{ tripId: string }>;
+}) {
+  const { tripId } = await params;
+
+  const trip = await prisma.trip.findUnique({ where: { id: tripId } });
+  if (!trip) notFound();
+
+  const items = await prisma.itineraryItem.findMany({
+    where: { tripId },
+    orderBy: [{ dayIndex: "asc" }, { startTime: "asc" }],
+  });
+
+  const totalDays = tripDurationDays(trip.startDate, trip.endDate);
+
   return (
-    <div className="rounded-lg border border-dashed p-10 text-center text-muted-foreground text-sm">
-      旅程機能は Agent Teams の Itinerary チームが実装します。
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <CreateItineraryDialog tripId={tripId} totalDays={totalDays} />
+      </div>
+      <div className="space-y-4">
+        {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => (
+          <ItineraryDaySection
+            key={day}
+            day={day}
+            items={items.filter((item) => item.dayIndex === day)}
+            totalDays={totalDays}
+          />
+        ))}
+      </div>
     </div>
   );
 }
