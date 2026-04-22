@@ -15,7 +15,18 @@
       "Bash(npm test *)",
       "Bash(npm uninstall *)",
       "Bash(git add *)",
-      "Bash(git -c commit.gpgsign=false commit -m ' *)"
+      "Bash(git -c commit.gpgsign=false commit -m ' *)",
+      "Bash(npm run *)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_click",
+      "mcp__playwright__browser_fill_form",
+      "mcp__playwright__browser_close",
+      "Bash(xargs cat *)",
+      "Bash(git stash *)",
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git *)"
     ]
   }
 }
