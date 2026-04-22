@@ -2,7 +2,20 @@
   "permissions": {
     "allow": [
       "Bash(npm --version)",
-      "Bash(npx --yes create-next-app@latest . --ts --tailwind --app --no-src-dir --no-eslint --use-npm --import-alias \"@/*\" --yes)"
+      "Bash(npx --yes create-next-app@latest . --ts --tailwind --app --no-src-dir --no-eslint --use-npm --import-alias \"@/*\" --yes)",
+      "Bash(npx --yes shadcn@latest init --yes --base-color neutral)",
+      "Bash(npx --yes shadcn@latest init --help)",
+      "Bash(npx --yes shadcn@latest init --defaults --yes)",
+      "Bash(npx --yes shadcn@latest add input card dialog checkbox label select table sonner --yes)",
+      "Bash(npm i *)",
+      "Bash(npx --yes prisma init --datasource-provider sqlite)",
+      "Bash(npx prisma *)",
+      "Bash(npx tsc *)",
+      "Bash(npm view *)",
+      "Bash(npm test *)",
+      "Bash(npm uninstall *)",
+      "Bash(git add *)",
+      "Bash(git -c commit.gpgsign=false commit -m ' *)"
     ]
   }
 }
