@@ -10,7 +10,7 @@ type FormState = {
   fieldErrors?: Record<string, string[]>;
 };
 
-export function parsePackingForm(formData: FormData) {
+export async function parsePackingForm(formData: FormData) {
   const quantityRaw = formData.get("quantity")?.toString();
   return packingItemInputSchema.safeParse({
     name: formData.get("name")?.toString() ?? "",
@@ -25,7 +25,7 @@ export async function createPackingItem(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = parsePackingForm(formData);
+  const parsed = await parsePackingForm(formData);
   if (!parsed.success) {
     return {
       ok: false,
@@ -56,7 +56,7 @@ export async function updatePackingItem(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = parsePackingForm(formData);
+  const parsed = await parsePackingForm(formData);
   if (!parsed.success) {
     return {
       ok: false,

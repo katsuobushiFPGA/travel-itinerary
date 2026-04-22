@@ -10,7 +10,7 @@ type FormState = {
   fieldErrors?: Record<string, string[]>;
 };
 
-export function parseMemberForm(formData: FormData) {
+export async function parseMemberForm(formData: FormData) {
   return memberInputSchema.safeParse({
     name: formData.get("name")?.toString() ?? "",
     role: formData.get("role")?.toString() ?? "",
@@ -23,7 +23,7 @@ export async function createMember(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = parseMemberForm(formData);
+  const parsed = await parseMemberForm(formData);
   if (!parsed.success) {
     return {
       ok: false,
@@ -53,7 +53,7 @@ export async function updateMember(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const parsed = parseMemberForm(formData);
+  const parsed = await parseMemberForm(formData);
   if (!parsed.success) {
     return {
       ok: false,
