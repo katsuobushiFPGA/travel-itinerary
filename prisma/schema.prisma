@@ -16,6 +16,8 @@ model Trip {
   startDate      DateTime
   endDate        DateTime
   memo           String?
+  coverImage     String?
+  shareToken     String?         @unique
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   members        Member[]
@@ -43,6 +45,7 @@ model ItineraryItem {
   endTime   String?
   title     String
   location  String?
+  url       String?
   note      String?
   sortOrder Int      @default(0)
   trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
