@@ -5,6 +5,7 @@ import {
   tripDurationDays,
 } from "@/lib/date-utils";
 import { BookletPrintButton } from "@/components/booklet/booklet-print-button";
+import { BookletEffects } from "@/components/booklet/booklet-effects";
 
 function parseDayCoverImages(raw: string | null): Record<string, string> {
   if (!raw) return {};
@@ -59,15 +60,24 @@ export default async function SharedBookletPage({
 
   return (
     <article className="booklet mx-auto max-w-3xl px-4 py-8 print:px-0 print:py-0 print:max-w-none">
-      <div className="flex justify-end mb-4 print:hidden">
-        <BookletPrintButton />
+      <BookletEffects />
+      <div
+        className="booklet-progress-track print:hidden"
+        aria-hidden
+      >
+        <div id="booklet-progress-bar" className="booklet-progress-bar" />
       </div>
 
-      <section className="booklet-cover relative overflow-hidden rounded-2xl border bg-card print:rounded-none print:border-0 print:break-after-page">
+      <section
+        data-reveal
+        data-parallax
+        className="booklet-cover relative overflow-hidden rounded-2xl border bg-card print:rounded-none print:border-0 print:break-after-page"
+      >
         {trip.coverImage ? (
-          <div className="relative h-72 sm:h-96 print:h-80">
+          <div className="relative h-72 sm:h-[28rem] print:h-80">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
+              data-parallax-img
               src={trip.coverImage}
               alt=""
               className="absolute inset-0 h-full w-full object-cover"
@@ -85,7 +95,10 @@ export default async function SharedBookletPage({
       </section>
 
       {trip.members.length > 0 && (
-        <section className="booklet-section mt-10 print:mt-6">
+        <section
+          data-reveal
+          className="booklet-section mt-10 print:mt-6"
+        >
           <h2 className="text-lg font-semibold border-b pb-2 mb-3">
             👥 メンバー
           </h2>
@@ -111,7 +124,10 @@ export default async function SharedBookletPage({
       )}
 
       {trip.memo && (
-        <section className="booklet-section mt-10 print:mt-6">
+        <section
+          data-reveal
+          className="booklet-section mt-10 print:mt-6"
+        >
           <h2 className="text-lg font-semibold border-b pb-2 mb-3">📝 ご案内</h2>
           <p className="text-sm whitespace-pre-wrap leading-relaxed">
             {trip.memo}
@@ -119,18 +135,25 @@ export default async function SharedBookletPage({
         </section>
       )}
 
-      <section className="booklet-section mt-10 print:mt-6">
+      <section
+        data-reveal
+        className="booklet-section mt-10 print:mt-6"
+      >
         <h2 className="text-lg font-semibold border-b pb-2 mb-3">🗓 旅程</h2>
-        <div className="space-y-8">
+        <div className="space-y-10">
           {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
             const items = itemsByDay.get(day) ?? [];
             const dayImage = dayCoverImages[String(day)];
             return (
               <div
                 key={day}
-                className="booklet-day print:break-inside-avoid"
+                data-reveal
+                className="booklet-day relative print:break-inside-avoid"
               >
-                <DayBanner day={day} image={dayImage} />
+                <div className="sticky top-0 z-20 -mx-4 px-4 py-2 bg-background/85 backdrop-blur-sm text-[11px] font-semibold tracking-[0.18em] uppercase text-muted-foreground print:hidden">
+                  Day {day} / {totalDays}
+                </div>
+                <DayBanner day={day} image={dayImage} totalDays={totalDays} />
                 {items.length === 0 ? (
                   <p className="text-sm text-muted-foreground px-2 py-4">
                     この日の予定はありません
@@ -145,7 +168,10 @@ export default async function SharedBookletPage({
       </section>
 
       {trip.packingItems.length > 0 && (
-        <section className="booklet-section mt-10 print:mt-6 print:break-before-page">
+        <section
+          data-reveal
+          className="booklet-section mt-10 print:mt-6 print:break-before-page"
+        >
           <h2 className="text-lg font-semibold border-b pb-2 mb-3">
             🎒 持ち物リスト
           </h2>
@@ -172,8 +198,11 @@ export default async function SharedBookletPage({
         </section>
       )}
 
-      <footer className="mt-10 pt-4 border-t text-center text-xs text-muted-foreground print:mt-6">
-        旅のしおり
+      <footer className="mt-12 pt-4 border-t text-center text-xs text-muted-foreground print:mt-6">
+        <p>旅のしおり</p>
+        <div className="mt-2 print:hidden">
+          <BookletPrintButton />
+        </div>
       </footer>
     </article>
   );
@@ -209,12 +238,24 @@ function CoverText({
   );
 }
 
-function DayBanner({ day, image }: { day: number; image: string | undefined }) {
+function DayBanner({
+  day,
+  image,
+  totalDays,
+}: {
+  day: number;
+  image: string | undefined;
+  totalDays: number;
+}) {
   if (image) {
     return (
-      <div className="booklet-day-banner relative overflow-hidden rounded-xl mb-4 h-32 sm:h-40 print:rounded-none print:h-28">
+      <div
+        data-parallax
+        className="booklet-day-banner relative overflow-hidden rounded-xl mb-4 h-36 sm:h-44 print:rounded-none print:h-28"
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
+          data-parallax-img
           src={image}
           alt=""
           className="absolute inset-0 h-full w-full object-cover"
@@ -223,7 +264,7 @@ function DayBanner({ day, image }: { day: number; image: string | undefined }) {
         <div className="absolute inset-0 flex items-center px-5 sm:px-8 text-white">
           <div>
             <p className="text-xs tracking-widest uppercase text-white/80">
-              Day {day}
+              Day {day} / {totalDays}
             </p>
             <p className="text-2xl sm:text-3xl font-bold mt-0.5">
               {day} 日目
@@ -236,7 +277,7 @@ function DayBanner({ day, image }: { day: number; image: string | undefined }) {
   return (
     <div className="mb-3">
       <p className="text-xs tracking-widest uppercase text-muted-foreground">
-        Day {day}
+        Day {day} / {totalDays}
       </p>
       <h3 className="text-xl font-bold mt-0.5">{day} 日目</h3>
     </div>
