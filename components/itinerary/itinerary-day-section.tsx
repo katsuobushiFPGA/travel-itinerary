@@ -15,6 +15,7 @@ type ItineraryItem = {
   endTime: string | null;
   title: string;
   location: string | null;
+  url: string | null;
   note: string | null;
   sortOrder: number;
 };
@@ -62,6 +63,18 @@ export function ItineraryDaySection({
                       {item.location}
                     </p>
                   )}
+                  {item.url && (
+                    <p className="text-sm mt-0.5 truncate">
+                      <a
+                        href={item.url}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="text-primary hover:underline"
+                      >
+                        {item.url}
+                      </a>
+                    </p>
+                  )}
                   {item.note && (
                     <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
                       {item.note}
@@ -77,6 +90,7 @@ export function ItineraryDaySection({
                       endTime: item.endTime,
                       title: item.title,
                       location: item.location,
+                      url: item.url,
                       note: item.note,
                     }}
                     totalDays={totalDays}

@@ -17,6 +17,7 @@ export async function parseItineraryForm(formData: FormData) {
     endTime: formData.get("endTime")?.toString() ?? "",
     title: formData.get("title")?.toString() ?? "",
     location: formData.get("location")?.toString() ?? "",
+    url: formData.get("url")?.toString() ?? "",
     note: formData.get("note")?.toString() ?? "",
   });
 }
@@ -42,6 +43,7 @@ export async function createItineraryItem(
       endTime: parsed.data.endTime,
       title: parsed.data.title,
       location: parsed.data.location,
+      url: parsed.data.url,
       note: parsed.data.note,
     },
   });
@@ -74,6 +76,7 @@ export async function updateItineraryItem(
       endTime: parsed.data.endTime,
       title: parsed.data.title,
       location: parsed.data.location,
+      url: parsed.data.url ?? null,
       note: parsed.data.note,
     },
   });

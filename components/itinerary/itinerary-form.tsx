@@ -32,6 +32,7 @@ type ItemDefaults = {
   endTime?: string | null;
   title: string;
   location?: string | null;
+  url?: string | null;
   note?: string | null;
 };
 
@@ -122,6 +123,18 @@ function ItineraryFields({
           placeholder="東京都千代田区"
         />
         <FieldError messages={fieldErrors?.location} />
+      </div>
+      <div>
+        <Label htmlFor="url">URL</Label>
+        <Input
+          id="url"
+          name="url"
+          type="url"
+          inputMode="url"
+          defaultValue={defaults?.url ?? ""}
+          placeholder="https://example.com/reserve"
+        />
+        <FieldError messages={fieldErrors?.url} />
       </div>
       <div>
         <Label htmlFor="note">メモ</Label>

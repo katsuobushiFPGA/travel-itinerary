@@ -78,6 +78,16 @@ export const itineraryItemInputSchema = z
       .max(200)
       .optional()
       .transform((v) => (v === "" ? undefined : v)),
+    url: z
+      .string()
+      .trim()
+      .max(2000)
+      .optional()
+      .transform((v) => (v === "" ? undefined : v))
+      .refine(
+        (v) => v === undefined || /^https?:\/\//.test(v),
+        { message: "http(s) で始まる URL を指定してください" },
+      ),
     note: z
       .string()
       .trim()
