@@ -160,6 +160,12 @@
     -webkit-print-color-adjust: exact;
   }
 
+  .booklet-cover,
+  .booklet-day-banner {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
   .booklet-section {
     break-inside: auto;
   }

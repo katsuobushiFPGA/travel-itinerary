@@ -6,6 +6,19 @@ import {
 } from "@/lib/date-utils";
 import { BookletPrintButton } from "@/components/booklet/booklet-print-button";
 
+function parseDayCoverImages(raw: string | null): Record<string, string> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, string>;
+    }
+  } catch {
+    // ignore malformed JSON
+  }
+  return {};
+}
+
 export default async function SharedBookletPage({
   params,
 }: {
@@ -28,6 +41,7 @@ export default async function SharedBookletPage({
   if (!trip) notFound();
 
   const totalDays = tripDurationDays(trip.startDate, trip.endDate);
+  const dayCoverImages = parseDayCoverImages(trip.dayCoverImages);
   const itemsByDay = new Map<number, typeof trip.itineraryItems>();
   for (const item of trip.itineraryItems) {
     const list = itemsByDay.get(item.dayIndex) ?? [];
@@ -51,15 +65,15 @@ export default async function SharedBookletPage({
 
       <section className="booklet-cover relative overflow-hidden rounded-2xl border bg-card print:rounded-none print:border-0 print:break-after-page">
         {trip.coverImage ? (
-          <div className="relative h-64 sm:h-80 print:h-72">
+          <div className="relative h-72 sm:h-96 print:h-80">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={trip.coverImage}
               alt=""
               className="absolute inset-0 h-full w-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-            <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-8 text-white">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10 text-white">
               <CoverText trip={trip} totalDays={totalDays} onImage />
             </div>
           </div>
@@ -71,7 +85,7 @@ export default async function SharedBookletPage({
       </section>
 
       {trip.members.length > 0 && (
-        <section className="booklet-section mt-8 print:mt-6">
+        <section className="booklet-section mt-10 print:mt-6">
           <h2 className="text-lg font-semibold border-b pb-2 mb-3">
             👥 メンバー
           </h2>
@@ -97,7 +111,7 @@ export default async function SharedBookletPage({
       )}
 
       {trip.memo && (
-        <section className="booklet-section mt-8 print:mt-6">
+        <section className="booklet-section mt-10 print:mt-6">
           <h2 className="text-lg font-semibold border-b pb-2 mb-3">📝 ご案内</h2>
           <p className="text-sm whitespace-pre-wrap leading-relaxed">
             {trip.memo}
@@ -105,69 +119,24 @@ export default async function SharedBookletPage({
         </section>
       )}
 
-      <section className="booklet-section mt-8 print:mt-6">
+      <section className="booklet-section mt-10 print:mt-6">
         <h2 className="text-lg font-semibold border-b pb-2 mb-3">🗓 旅程</h2>
-        <div className="space-y-6">
+        <div className="space-y-8">
           {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => {
             const items = itemsByDay.get(day) ?? [];
+            const dayImage = dayCoverImages[String(day)];
             return (
-              <div key={day} className="booklet-day print:break-inside-avoid">
-                <h3 className="text-base font-semibold mb-2">
-                  Day {day}
-                  {day < totalDays && (
-                    <span className="ml-2 text-sm font-normal text-muted-foreground">
-                      （{day} 日目）
-                    </span>
-                  )}
-                </h3>
+              <div
+                key={day}
+                className="booklet-day print:break-inside-avoid"
+              >
+                <DayBanner day={day} image={dayImage} />
                 {items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground px-2">
+                  <p className="text-sm text-muted-foreground px-2 py-4">
                     この日の予定はありません
                   </p>
                 ) : (
-                  <ul className="divide-y rounded-md border">
-                    {items.map((item) => (
-                      <li
-                        key={item.id}
-                        className="flex items-start gap-4 px-3 py-3 print:break-inside-avoid"
-                      >
-                        <div className="w-20 shrink-0 text-sm text-muted-foreground tabular-nums">
-                          <div>{item.startTime}</div>
-                          {item.endTime && (
-                            <div className="text-xs">〜 {item.endTime}</div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium leading-snug">
-                            {item.title}
-                          </p>
-                          {item.location && (
-                            <p className="text-sm text-muted-foreground mt-0.5">
-                              📍 {item.location}
-                            </p>
-                          )}
-                          {item.url && (
-                            <p className="text-sm mt-0.5 break-all">
-                              🔗{" "}
-                              <a
-                                href={item.url}
-                                target="_blank"
-                                rel="noreferrer noopener"
-                                className="text-primary hover:underline"
-                              >
-                                {item.url}
-                              </a>
-                            </p>
-                          )}
-                          {item.note && (
-                            <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">
-                              {item.note}
-                            </p>
-                          )}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                  <Timeline items={items} />
                 )}
               </div>
             );
@@ -176,7 +145,7 @@ export default async function SharedBookletPage({
       </section>
 
       {trip.packingItems.length > 0 && (
-        <section className="booklet-section mt-8 print:mt-6 print:break-before-page">
+        <section className="booklet-section mt-10 print:mt-6 print:break-before-page">
           <h2 className="text-lg font-semibold border-b pb-2 mb-3">
             🎒 持ち物リスト
           </h2>
@@ -228,7 +197,7 @@ function CoverText({
           {trip.destination}
         </p>
       )}
-      <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mt-1">
+      <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mt-1 drop-shadow-sm">
         {trip.title}
       </h1>
       <p
@@ -237,5 +206,105 @@ function CoverText({
         {formatTripRange(trip.startDate, trip.endDate)}（{totalDays}日間）
       </p>
     </div>
+  );
+}
+
+function DayBanner({ day, image }: { day: number; image: string | undefined }) {
+  if (image) {
+    return (
+      <div className="booklet-day-banner relative overflow-hidden rounded-xl mb-4 h-32 sm:h-40 print:rounded-none print:h-28">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={image}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+        <div className="absolute inset-0 flex items-center px-5 sm:px-8 text-white">
+          <div>
+            <p className="text-xs tracking-widest uppercase text-white/80">
+              Day {day}
+            </p>
+            <p className="text-2xl sm:text-3xl font-bold mt-0.5">
+              {day} 日目
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="mb-3">
+      <p className="text-xs tracking-widest uppercase text-muted-foreground">
+        Day {day}
+      </p>
+      <h3 className="text-xl font-bold mt-0.5">{day} 日目</h3>
+    </div>
+  );
+}
+
+type ItineraryItem = {
+  id: string;
+  startTime: string;
+  endTime: string | null;
+  title: string;
+  location: string | null;
+  url: string | null;
+  note: string | null;
+};
+
+function Timeline({ items }: { items: ItineraryItem[] }) {
+  return (
+    <ol className="relative pl-6">
+      <span
+        aria-hidden
+        className="absolute left-[11px] top-2 bottom-2 w-px bg-border"
+      />
+      {items.map((item) => (
+        <li
+          key={item.id}
+          className="relative pb-5 last:pb-0 print:break-inside-avoid"
+        >
+          <span
+            aria-hidden
+            className="absolute -left-6 top-1.5 h-[10px] w-[10px] rounded-full border-2 border-primary bg-background"
+          />
+          <div className="flex items-baseline gap-3">
+            <time className="text-xs font-mono tabular-nums text-muted-foreground shrink-0">
+              {item.startTime}
+              {item.endTime && (
+                <span className="text-[10px] ml-0.5">
+                  〜{item.endTime}
+                </span>
+              )}
+            </time>
+            <p className="font-medium leading-snug">{item.title}</p>
+          </div>
+          <div className="mt-1 space-y-0.5 text-sm">
+            {item.location && (
+              <p className="text-muted-foreground">📍 {item.location}</p>
+            )}
+            {item.url && (
+              <p className="break-all">
+                🔗{" "}
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="text-primary hover:underline"
+                >
+                  {item.url}
+                </a>
+              </p>
+            )}
+            {item.note && (
+              <p className="text-muted-foreground whitespace-pre-wrap">
+                {item.note}
+              </p>
+            )}
+          </div>
+        </li>
+      ))}
+    </ol>
   );
 }

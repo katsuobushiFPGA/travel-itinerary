@@ -17,6 +17,7 @@ model Trip {
   endDate        DateTime
   memo           String?
   coverImage     String?
+  dayCoverImages String?
   shareToken     String?         @unique
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
