@@ -21,12 +21,7 @@ export function ShareLinkCard({
   const [pending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
 
-  const shareUrl =
-    shareToken && typeof window !== "undefined"
-      ? `${window.location.origin}/s/${shareToken}`
-      : shareToken
-        ? `/s/${shareToken}`
-        : null;
+  const relativeShareUrl = shareToken ? `/s/${shareToken}` : null;
 
   function handleIssue() {
     startTransition(async () => {
@@ -45,9 +40,10 @@ export function ShareLinkCard({
   }
 
   async function handleCopy() {
-    if (!shareUrl) return;
+    if (!relativeShareUrl) return;
+    const absoluteUrl = `${window.location.origin}${relativeShareUrl}`;
     try {
-      await navigator.clipboard.writeText(shareUrl);
+      await navigator.clipboard.writeText(absoluteUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -68,7 +64,7 @@ export function ShareLinkCard({
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <code className="flex-1 min-w-0 truncate rounded border bg-muted px-2 py-1 font-mono text-xs">
-                {shareUrl ?? `/s/${shareToken}`}
+                {relativeShareUrl}
               </code>
               <Button size="sm" variant="outline" onClick={handleCopy}>
                 {copied ? "コピーしました" : "コピー"}
