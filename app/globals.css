@@ -128,3 +128,43 @@
     @apply font-sans;
   }
 }
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  :root {
+    color-scheme: light;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  .booklet {
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  .booklet a {
+    color: #111;
+    text-decoration: underline;
+  }
+
+  .booklet img {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .booklet-section {
+    break-inside: auto;
+  }
+
+  .booklet-day {
+    break-inside: avoid;
+  }
+}

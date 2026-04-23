@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
-import "./globals.css";
+import "../globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description: "複数の旅行を管理できるローカル完結の旅のしおりアプリ",
 };
 
-export default function RootLayout({
+export default function AppRootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
