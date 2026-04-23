@@ -25,6 +25,16 @@ export const tripInputSchema = z
       .max(2000)
       .optional()
       .transform((v) => (v === "" ? undefined : v)),
+    coverImage: z
+      .string()
+      .trim()
+      .max(2000)
+      .optional()
+      .transform((v) => (v === "" ? undefined : v))
+      .refine(
+        (v) => v === undefined || /^https?:\/\//.test(v),
+        { message: "http(s) で始まる URL を指定してください" },
+      ),
   })
   .refine((v) => v.startDate <= v.endDate, {
     message: "開始日は終了日以前にしてください",

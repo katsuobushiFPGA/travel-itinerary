@@ -44,6 +44,7 @@ export default async function TripLayout({
               startDate: toDateInputValue(trip.startDate),
               endDate: toDateInputValue(trip.endDate),
               memo: trip.memo,
+              coverImage: trip.coverImage,
             }}
           />
           <DeleteTripButton tripId={trip.id} />

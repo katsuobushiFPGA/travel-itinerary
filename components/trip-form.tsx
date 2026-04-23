@@ -29,6 +29,7 @@ type TripDefaults = {
   startDate: string;
   endDate: string;
   memo?: string | null;
+  coverImage?: string | null;
 };
 
 function SubmitButton({ label }: { label: string }) {
@@ -110,6 +111,18 @@ function TripFields({
           placeholder="行きたいお店、目的、注意事項など自由に"
         />
         <FieldError messages={fieldErrors?.memo} />
+      </div>
+      <div>
+        <Label htmlFor="coverImage">表紙画像 URL</Label>
+        <Input
+          id="coverImage"
+          name="coverImage"
+          type="url"
+          inputMode="url"
+          defaultValue={defaults?.coverImage ?? ""}
+          placeholder="https://example.com/cover.jpg"
+        />
+        <FieldError messages={fieldErrors?.coverImage} />
       </div>
     </div>
   );

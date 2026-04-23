@@ -18,6 +18,7 @@ function parseTripForm(formData: FormData) {
     startDate: formData.get("startDate")?.toString() ?? "",
     endDate: formData.get("endDate")?.toString() ?? "",
     memo: formData.get("memo")?.toString() ?? "",
+    coverImage: formData.get("coverImage")?.toString() ?? "",
   });
 }
 
@@ -40,6 +41,7 @@ export async function createTrip(
       startDate: new Date(`${parsed.data.startDate}T00:00:00.000Z`),
       endDate: new Date(`${parsed.data.endDate}T00:00:00.000Z`),
       memo: parsed.data.memo,
+      coverImage: parsed.data.coverImage,
     },
   });
   revalidatePath("/");
@@ -67,6 +69,7 @@ export async function updateTrip(
       startDate: new Date(`${parsed.data.startDate}T00:00:00.000Z`),
       endDate: new Date(`${parsed.data.endDate}T00:00:00.000Z`),
       memo: parsed.data.memo,
+      coverImage: parsed.data.coverImage ?? null,
     },
   });
   revalidatePath("/");
