@@ -1,9 +1,14 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { tripInputSchema } from "@/lib/validators";
+
+function generateShareToken() {
+  return randomBytes(16).toString("base64url");
+}
 
 type FormState = {
   ok: boolean;
@@ -81,4 +86,23 @@ export async function deleteTrip(tripId: string) {
   await prisma.trip.delete({ where: { id: tripId } });
   revalidatePath("/");
   redirect("/");
+}
+
+export async function issueShareToken(tripId: string): Promise<FormState> {
+  const token = generateShareToken();
+  await prisma.trip.update({
+    where: { id: tripId },
+    data: { shareToken: token },
+  });
+  revalidatePath(`/trips/${tripId}`, "layout");
+  return { ok: true };
+}
+
+export async function revokeShareToken(tripId: string): Promise<FormState> {
+  await prisma.trip.update({
+    where: { id: tripId },
+    data: { shareToken: null },
+  });
+  revalidatePath(`/trips/${tripId}`, "layout");
+  return { ok: true };
 }

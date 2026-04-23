@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ShareLinkCard } from "@/components/share-link-card";
 
 export default async function TripOverviewPage({
   params,
@@ -44,6 +45,9 @@ export default async function TripOverviewPage({
           <p>持ち物: {trip._count.packingItems}件</p>
         </CardContent>
       </Card>
+      <div className="sm:col-span-2">
+        <ShareLinkCard tripId={trip.id} shareToken={trip.shareToken} />
+      </div>
     </div>
   );
 }
