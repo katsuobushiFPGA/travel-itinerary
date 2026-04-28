@@ -104,13 +104,14 @@ export function BookletMap({
               tabIndex={0}
               aria-label={ariaLabel}
               onClick={() => handlePick(p.id)}
+              onFocus={() => setActiveId(p.id)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   handlePick(p.id);
                 }
               }}
-              style={{ cursor: "pointer", outline: "none" }}
+              style={{ cursor: "pointer" }}
             >
               {isCurrent && (
                 <circle

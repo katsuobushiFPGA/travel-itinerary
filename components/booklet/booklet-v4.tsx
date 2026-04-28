@@ -108,13 +108,20 @@ export function BookletV4({ data }: { data: BookletData }) {
     if (scrollTimer.current !== null) {
       window.clearTimeout(scrollTimer.current);
     }
-    // アコーディオンの max-height transition (0.36s) 完了を待ってから
-    // スクロール先を計算する
+    // アコーディオンの max-height transition は globals.css の
+    // .bookletv4-section-body で 0.36s。完了後にスクロールしないと閉じた
+    // ままの高さで scrollIntoView が中央計算するためずれる。CSS 値を
+    // 変更する場合はここも合わせて更新すること。
+    // reduced-motion 環境ではトランジションが無効化されるため遅延不要。
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const delay = reduced ? 0 : 380;
     scrollTimer.current = window.setTimeout(() => {
       const el = document.getElementById(rowDomId(id));
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
       scrollTimer.current = null;
-    }, 380);
+    }, delay);
   };
 
   const currentTitle = currentItem ? findTitle(data, currentItem.id) : "";
