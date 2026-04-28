@@ -82,8 +82,7 @@ describe("parseBulkItinerary", () => {
   });
 
   it("タイトル空はエラー (空白なしで @ のみ)", () => {
-    // "@東京駅" 単独だと最初の空白分割で title="@東京駅" となるため
-    // startsWith("@") の早期判定が効くか確認する回帰ケース
+    // 回帰: @始まりのフィールドをタイトルとして誤解釈していたバグの再現条件
     const r = parseBulkItinerary("09:00 @東京駅のみ");
     expect(r.items).toEqual([]);
     expect(r.errors[0].message).toMatch(/タイトル/);

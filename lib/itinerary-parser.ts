@@ -1,3 +1,6 @@
+// 一括入力で 1 度に登録できる最大件数。Server Action と UI の両方で参照する。
+export const MAX_BULK_ITINERARY_ITEMS = 500;
+
 // 一括入力テキストをパースして ItineraryItem の元データに変換するヘルパー。
 //
 // 想定フォーマット:

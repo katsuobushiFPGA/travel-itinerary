@@ -14,7 +14,10 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { createItineraryItemsBulk } from "@/lib/actions/itinerary";
-import { parseBulkItinerary } from "@/lib/itinerary-parser";
+import {
+  MAX_BULK_ITINERARY_ITEMS,
+  parseBulkItinerary,
+} from "@/lib/itinerary-parser";
 
 const PLACEHOLDER = `Day 1
 09:00 東京駅集合 @東京駅
@@ -42,8 +45,11 @@ export function BulkAddItineraryDialog({
     .map((it) => it.day);
   const uniqueOutOfRange = Array.from(new Set(dayOutOfRange));
 
+  const overLimit = parsed.items.length > MAX_BULK_ITINERARY_ITEMS;
+
   const isValid =
     parsed.items.length > 0 &&
+    !overLimit &&
     parsed.errors.length === 0 &&
     uniqueOutOfRange.length === 0;
 
@@ -91,6 +97,7 @@ export function BulkAddItineraryDialog({
             items={parsed.items}
             errors={parsed.errors}
             outOfRange={uniqueOutOfRange}
+            overLimit={overLimit}
             totalDays={totalDays}
           />
         </div>
@@ -112,11 +119,13 @@ function BulkPreview({
   items,
   errors,
   outOfRange,
+  overLimit,
   totalDays,
 }: {
   items: { day: number; startTime: string; endTime?: string; title: string; location?: string }[];
   errors: { line: number; raw: string; message: string }[];
   outOfRange: number[];
+  overLimit: boolean;
   totalDays: number;
 }) {
   if (items.length === 0 && errors.length === 0) {
@@ -161,6 +170,11 @@ function BulkPreview({
       {outOfRange.length > 0 && (
         <p className="mt-1 text-destructive">
           Day {outOfRange.join(", ")} は旅程の範囲外です（最大 {totalDays}）
+        </p>
+      )}
+      {overLimit && (
+        <p className="mt-1 text-destructive">
+          一度に登録できるのは {MAX_BULK_ITINERARY_ITEMS} 件までです
         </p>
       )}
       {errors.length > 0 && (

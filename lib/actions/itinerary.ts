@@ -4,9 +4,10 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { tripDurationDays } from "@/lib/date-utils";
 import { itineraryItemInputSchema } from "@/lib/validators";
-import type { ParsedItineraryLine } from "@/lib/itinerary-parser";
-
-const MAX_BULK_ITEMS = 500;
+import {
+  MAX_BULK_ITINERARY_ITEMS,
+  type ParsedItineraryLine,
+} from "@/lib/itinerary-parser";
 
 type FormState = {
   ok: boolean;
@@ -108,11 +109,11 @@ export async function createItineraryItemsBulk(
   if (items.length === 0) {
     return { ok: false, created: 0, error: "追加対象がありません" };
   }
-  if (items.length > MAX_BULK_ITEMS) {
+  if (items.length > MAX_BULK_ITINERARY_ITEMS) {
     return {
       ok: false,
       created: 0,
-      error: `一度に登録できるのは ${MAX_BULK_ITEMS} 件までです`,
+      error: `一度に登録できるのは ${MAX_BULK_ITINERARY_ITEMS} 件までです`,
     };
   }
 
