@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LocationCombobox } from "@/components/itinerary/location-combobox";
 import {
   createItineraryItem,
   updateItineraryItem,
@@ -119,11 +120,11 @@ function ItineraryFields({
       </div>
       <div>
         <Label htmlFor="location">場所</Label>
-        <Input
+        <LocationCombobox
           id="location"
           name="location"
           defaultValue={defaults?.location ?? ""}
-          placeholder="東京都千代田区"
+          placeholder="東京駅 / 東京都千代田区"
         />
         <FieldError messages={fieldErrors?.location} />
       </div>
