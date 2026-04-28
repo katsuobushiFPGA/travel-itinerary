@@ -49,12 +49,8 @@ function dayAccent(day: number): string {
 }
 
 export function BookletV4({ data }: { data: BookletData }) {
-  const order = React.useMemo(
-    () =>
-      data.days.flatMap((d) =>
-        d.items.map((it) => ({ id: it.id, day: d.day })),
-      ),
-    [data],
+  const order = data.days.flatMap((d) =>
+    d.items.map((it) => ({ id: it.id, day: d.day })),
   );
 
   const initialOpen =
@@ -64,7 +60,6 @@ export function BookletV4({ data }: { data: BookletData }) {
     initialOpen,
   );
   const [currentIdx, setCurrentIdx] = React.useState(0);
-  const [flashId, setFlashId] = React.useState<string | null>(null);
 
   const currentItem = order[currentIdx] ?? null;
   const nextItem =
@@ -76,27 +71,6 @@ export function BookletV4({ data }: { data: BookletData }) {
     if (order.length === 0) return;
     setCurrentIdx((i) => (i + 1) % order.length);
   };
-
-  const flashTimer = React.useRef<number | null>(null);
-  const flash = (id: string) => {
-    setFlashId(id);
-    if (flashTimer.current !== null) {
-      window.clearTimeout(flashTimer.current);
-    }
-    flashTimer.current = window.setTimeout(() => {
-      setFlashId(null);
-      flashTimer.current = null;
-    }, 1400);
-  };
-
-  React.useEffect(
-    () => () => {
-      if (flashTimer.current !== null) {
-        window.clearTimeout(flashTimer.current);
-      }
-    },
-    [],
-  );
 
   const currentTitle = currentItem ? findTitle(data, currentItem.id) : "";
   const nextTitle =
@@ -232,8 +206,6 @@ export function BookletV4({ data }: { data: BookletData }) {
                 items={d.items}
                 accent={accent}
                 currentItemId={currentItem?.id ?? null}
-                flashId={flashId}
-                onTapItem={flash}
               />
             )}
           </Section>
@@ -342,7 +314,7 @@ function Section({
 }) {
   const isOpen = openSection === id;
   const innerRef = React.useRef<HTMLDivElement | null>(null);
-  const [contentHeight, setContentHeight] = React.useState(0);
+  const [contentHeight, setContentHeight] = React.useState<number | null>(null);
   const bodyId = `bookletv4-section-${id}`;
 
   React.useEffect(() => {
@@ -413,8 +385,13 @@ function Section({
       <div
         id={bodyId}
         className="bookletv4-section-body"
+        inert={!isOpen}
         style={{
-          maxHeight: isOpen ? `${contentHeight}px` : 0,
+          maxHeight: isOpen
+            ? contentHeight !== null
+              ? `${contentHeight}px`
+              : "none"
+            : 0,
           opacity: isOpen ? 1 : 0,
         }}
       >
@@ -436,14 +413,10 @@ function Timeline({
   items,
   accent,
   currentItemId,
-  flashId,
-  onTapItem,
 }: {
   items: ItineraryItem[];
   accent: string;
   currentItemId: string | null;
-  flashId: string | null;
-  onTapItem: (id: string) => void;
 }) {
   return (
     <div className="relative pl-12 mt-1.5">
@@ -455,7 +428,6 @@ function Timeline({
       <ul className="space-y-2.5">
         {items.map((it) => {
           const isNow = currentItemId === it.id;
-          const isFlashing = flashId === it.id;
           return (
             <li key={it.id} className="relative">
               <div
@@ -478,10 +450,7 @@ function Timeline({
                   left: -7,
                   background: isNow ? accent : "var(--background)",
                   border: `2px solid ${accent}`,
-                  boxShadow: isFlashing
-                    ? "0 0 0 4px rgba(216,164,59,0.4)"
-                    : "none",
-                  transition: "box-shadow .25s, background .25s",
+                  transition: "background .25s",
                 }}
               />
               {isNow && (
@@ -491,13 +460,8 @@ function Timeline({
                   style={{ left: -7, border: `2px solid ${accent}` }}
                 />
               )}
-              <button
-                type="button"
-                onClick={() => onTapItem(it.id)}
-                className={
-                  "block w-full text-left rounded-lg border px-2.5 py-1.5" +
-                  (isFlashing ? " bookletv4-row-flash" : "")
-                }
+              <div
+                className="block rounded-lg border px-2.5 py-1.5"
                 style={{
                   borderColor: isNow ? accent : undefined,
                   background: isNow
@@ -527,13 +491,12 @@ function Timeline({
                       target="_blank"
                       rel="noreferrer noopener"
                       className="text-primary underline"
-                      onClick={(e) => e.stopPropagation()}
                     >
                       {it.url}
                     </a>
                   </div>
                 )}
-              </button>
+              </div>
             </li>
           );
         })}

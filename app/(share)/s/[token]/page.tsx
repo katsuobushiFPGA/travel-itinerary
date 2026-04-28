@@ -9,7 +9,11 @@ function parseDayCoverImages(raw: string | null): Record<string, string> {
   try {
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-      return parsed as Record<string, string>;
+      const result: Record<string, string> = {};
+      for (const [k, v] of Object.entries(parsed)) {
+        if (typeof v === "string") result[k] = v;
+      }
+      return result;
     }
   } catch {
     // ignore malformed JSON
