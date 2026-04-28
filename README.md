@@ -13,6 +13,8 @@
 - **サマリー**: しおり概要タブで参加メンバー/旅程/持ち物の件数を一望。
 - **共有しおり (`/s/<token>`)**: トークン発行で第三者と共有可能。タイムライン型アコーディオン + 日色分けの sticky マップ + NOW/NEXT 案内チップを備えたモバイル最適化ビュー。`@media print` で全セクション展開＋マップ非表示の印刷スタイルに切り替わる。
 - **マップ座標エディタ**: 旅程アイテムごとに SVG プレビュー上をクリックしてピンを配置。共有しおり側のマップに反映され、ピンタップで対応する行へスクロールする。
+- **テキストで一括追加**: 旅程画面の「テキストで一括追加」ダイアログに `Day N` ヘッダ + `HH:MM[-HH:MM] タイトル @場所` 形式の複数行を貼り付けて、1 リクエストで最大 500 件まで作成。プレビューで件数とエラー行が見える。
+- **ロケーション autocomplete**: 旅程アイテムの「場所」入力で 2 文字以上タイプすると Nominatim (OpenStreetMap) を引いて候補を 5 件まで表示。↑↓ + Enter で選択。
 
 ## 技術スタック
 
@@ -118,6 +120,7 @@ departure/
 - **日付扱い**: SQLite の `DateTime` は内部的に文字列なので、UI では `toISOString().slice(0,10)` で `yyyy-MM-dd` 部分のみ扱う。
 - **共有しおり (BookletV4)**: `app/(share)` 配下は専用ルートグループで、Yomogi / Kaisei Decol を Google Fonts CSS 経由で読み込む。アコーディオンは `max-height` 遷移 (0.36s)。ピンクリックでセクションを開いてから 380ms 待ってスクロール (transition 完了後)。`prefers-reduced-motion` は遅延 0ms に短絡。
 - **マップ座標系**: `mapX` ∈ [0, 100], `mapY` ∈ [0, 75]。`MapCoordPicker` は `preserveAspectRatio="xMidYMid meet"` のレターボックスを補正してクリック位置を SVG ユーザー座標に変換する。
+- **Nominatim 利用ポリシー**: `searchPlaces` Server Action は OSM Nominatim (1 req/s, User-Agent 必須) を呼ぶ。`LocationCombobox` は 350ms debounce + stale 応答破棄でクライアント側のリクエストを抑制している。本番運用で利用が増える場合はキャッシュ層 (Vercel Runtime Cache など) かセルフホスト Nominatim への切替を検討する。
 
 ## Agent Teams 実装ログ
 
@@ -140,5 +143,6 @@ npm test
 - `lib/__tests__/members-actions.test.ts` : `parseMemberForm`
 - `lib/__tests__/packing-actions.test.ts` : `parsePackingForm`
 - `lib/__tests__/itinerary-actions.test.ts` : `parseItineraryForm`
+- `lib/__tests__/itinerary-parser.test.ts` : 一括入力テキストパーサ
 
 DB に触れる部分 (Prisma 呼び出し) は単体テスト対象外。`npm run dev` + ブラウザ、または Prisma Studio で検証する。
