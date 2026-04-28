@@ -19,6 +19,8 @@ export async function parseItineraryForm(formData: FormData) {
     location: formData.get("location")?.toString() ?? "",
     url: formData.get("url")?.toString() ?? "",
     note: formData.get("note")?.toString() ?? "",
+    mapX: formData.get("mapX")?.toString() ?? "",
+    mapY: formData.get("mapY")?.toString() ?? "",
   });
 }
 
@@ -45,6 +47,8 @@ export async function createItineraryItem(
       location: parsed.data.location,
       url: parsed.data.url,
       note: parsed.data.note,
+      mapX: parsed.data.mapX,
+      mapY: parsed.data.mapY,
     },
   });
   revalidatePath(`/trips/${tripId}/itinerary`);
@@ -78,6 +82,8 @@ export async function updateItineraryItem(
       location: parsed.data.location,
       url: parsed.data.url ?? null,
       note: parsed.data.note,
+      mapX: parsed.data.mapX ?? null,
+      mapY: parsed.data.mapY ?? null,
     },
   });
   revalidatePath(`/trips/${item.tripId}/itinerary`);

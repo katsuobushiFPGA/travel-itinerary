@@ -48,6 +48,8 @@ model ItineraryItem {
   location  String?
   url       String?
   note      String?
+  mapX      Float?
+  mapY      Float?
   sortOrder Int      @default(0)
   trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
 

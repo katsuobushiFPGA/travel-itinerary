@@ -155,4 +155,67 @@ describe("parseItineraryForm", () => {
       expect(result.data.location).toBeUndefined();
     }
   });
+
+  it("mapX/mapY が両方空なら座標は undefined", async () => {
+    const fd = makeFormData({
+      dayIndex: "1",
+      startTime: "09:00",
+      title: "集合",
+      mapX: "",
+      mapY: "",
+    });
+    const result = await parseItineraryForm(fd);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.mapX).toBeUndefined();
+      expect(result.data.mapY).toBeUndefined();
+    }
+  });
+
+  it("mapX/mapY が両方指定されれば数値として通る", async () => {
+    const fd = makeFormData({
+      dayIndex: "1",
+      startTime: "09:00",
+      title: "集合",
+      mapX: "42.5",
+      mapY: "61",
+    });
+    const result = await parseItineraryForm(fd);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.mapX).toBeCloseTo(42.5);
+      expect(result.data.mapY).toBe(61);
+    }
+  });
+
+  it("mapX のみ指定はエラー", async () => {
+    const fd = makeFormData({
+      dayIndex: "1",
+      startTime: "09:00",
+      title: "集合",
+      mapX: "30",
+    });
+    const result = await parseItineraryForm(fd);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      expect(fieldErrors.mapX?.[0]).toMatch(/X \/ Y/);
+    }
+  });
+
+  it("mapX が範囲外はエラー", async () => {
+    const fd = makeFormData({
+      dayIndex: "1",
+      startTime: "09:00",
+      title: "集合",
+      mapX: "150",
+      mapY: "50",
+    });
+    const result = await parseItineraryForm(fd);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      expect(fieldErrors.mapX?.[0]).toMatch(/0〜100/);
+    }
+  });
 });

@@ -94,10 +94,35 @@ export const itineraryItemInputSchema = z
       .max(1000)
       .optional()
       .transform((v) => (v === "" ? undefined : v)),
+    mapX: z
+      .string()
+      .optional()
+      .transform((v) => (v === "" || v === undefined ? undefined : Number(v)))
+      .refine(
+        (v) => v === undefined || (Number.isFinite(v) && v >= 0 && v <= 100),
+        { message: "0〜100 の範囲で指定してください" },
+      ),
+    mapY: z
+      .string()
+      .optional()
+      .transform((v) => (v === "" || v === undefined ? undefined : Number(v)))
+      .refine(
+        (v) => v === undefined || (Number.isFinite(v) && v >= 0 && v <= 100),
+        { message: "0〜100 の範囲で指定してください" },
+      ),
   })
   .refine(
     (v) => v.endTime === undefined || v.startTime <= v.endTime,
     { message: "終了時刻は開始時刻以降にしてください", path: ["endTime"] },
+  )
+  .refine(
+    (v) =>
+      (v.mapX === undefined && v.mapY === undefined) ||
+      (v.mapX !== undefined && v.mapY !== undefined),
+    {
+      message: "マップ座標は X / Y を両方指定してください",
+      path: ["mapX"],
+    },
   );
 export type ItineraryItemInput = z.infer<typeof itineraryItemInputSchema>;
 
