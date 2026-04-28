@@ -66,6 +66,8 @@ export default async function SharedBookletPage({
         location: it.location,
         url: it.url,
         note: it.note,
+        mapX: it.mapX,
+        mapY: it.mapY,
       })),
     }),
   );

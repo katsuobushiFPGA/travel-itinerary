@@ -215,7 +215,8 @@
   }
 
   .bookletv4-chev,
-  .bookletv4-now-chip {
+  .bookletv4-now-chip,
+  .bookletv4-map-sticky {
     display: none !important;
   }
 

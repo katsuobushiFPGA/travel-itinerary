@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { BookletMap, type MapPin } from "@/components/booklet/booklet-map";
 
 type Member = {
   id: string;
@@ -17,6 +18,8 @@ type ItineraryItem = {
   location: string | null;
   url: string | null;
   note: string | null;
+  mapX: number | null;
+  mapY: number | null;
 };
 
 type DayBlock = {
@@ -53,6 +56,22 @@ export function BookletV4({ data }: { data: BookletData }) {
     d.items.map((it) => ({ id: it.id, day: d.day })),
   );
 
+  const pins: MapPin[] = data.days.flatMap((d) =>
+    d.items
+      .filter(
+        (it): it is ItineraryItem & { mapX: number; mapY: number } =>
+          it.mapX !== null && it.mapY !== null,
+      )
+      .map((it) => ({
+        id: it.id,
+        day: d.day,
+        x: it.mapX,
+        y: it.mapY,
+        label: it.title,
+        hint: it.location,
+      })),
+  );
+
   const initialOpen =
     data.days.length > 0 ? `day-${data.days[0].day}` : "cover";
 
@@ -72,6 +91,16 @@ export function BookletV4({ data }: { data: BookletData }) {
     setCurrentIdx((i) => (i + 1) % order.length);
   };
 
+  const handlePickPin = (id: string) => {
+    const found = order.find((o) => o.id === id);
+    if (!found) return;
+    setOpenSection(`day-${found.day}`);
+    requestAnimationFrame(() => {
+      const el = document.getElementById(rowDomId(id));
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  };
+
   const currentTitle = currentItem ? findTitle(data, currentItem.id) : "";
   const nextTitle =
     nextItem && nextItem.id !== currentItem?.id
@@ -83,6 +112,16 @@ export function BookletV4({ data }: { data: BookletData }) {
       className="mx-auto w-full max-w-[480px] px-3 pb-24 pt-3 sm:px-4"
       style={{ fontFamily: "var(--font-yomogi)" }}
     >
+      {pins.length > 0 && (
+        <div className="bookletv4-map-sticky sticky top-0 z-20 -mx-3 px-3 pt-3 pb-2 sm:-mx-4 sm:px-4 backdrop-blur-sm bg-background/85 mb-3">
+          <BookletMap
+            pins={pins}
+            dayAccent={dayAccent}
+            currentPinId={currentItem?.id ?? null}
+            onPickPin={handlePickPin}
+          />
+        </div>
+      )}
       <Section
         id="cover"
         openSection={openSection}
@@ -293,6 +332,10 @@ function findTitle(data: BookletData, id: string): string {
   return "";
 }
 
+function rowDomId(itemId: string): string {
+  return `bookletv4-row-${itemId}`;
+}
+
 function Section({
   id,
   openSection,
@@ -429,7 +472,11 @@ function Timeline({
         {items.map((it) => {
           const isNow = currentItemId === it.id;
           return (
-            <li key={it.id} className="relative">
+            <li
+              key={it.id}
+              id={rowDomId(it.id)}
+              className="relative scroll-mt-44"
+            >
               <div
                 className="absolute -left-12 w-9 text-right top-0"
                 style={{ fontFamily: "var(--font-kaisei)" }}
