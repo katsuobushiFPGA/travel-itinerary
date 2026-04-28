@@ -47,8 +47,8 @@ export async function createItineraryItem(
       location: parsed.data.location,
       url: parsed.data.url,
       note: parsed.data.note,
-      mapX: parsed.data.mapX,
-      mapY: parsed.data.mapY,
+      mapX: parsed.data.mapX ?? null,
+      mapY: parsed.data.mapY ?? null,
     },
   });
   revalidatePath(`/trips/${tripId}/itinerary`);

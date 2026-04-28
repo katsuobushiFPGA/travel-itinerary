@@ -94,6 +94,7 @@ export const itineraryItemInputSchema = z
       .max(1000)
       .optional()
       .transform((v) => (v === "" ? undefined : v)),
+    // SVG ユーザー座標 (viewBox 0 0 100 75) で保存する
     mapX: z
       .string()
       .optional()
@@ -107,8 +108,8 @@ export const itineraryItemInputSchema = z
       .optional()
       .transform((v) => (v === "" || v === undefined ? undefined : Number(v)))
       .refine(
-        (v) => v === undefined || (Number.isFinite(v) && v >= 0 && v <= 100),
-        { message: "0〜100 の範囲で指定してください" },
+        (v) => v === undefined || (Number.isFinite(v) && v >= 0 && v <= 75),
+        { message: "0〜75 の範囲で指定してください" },
       ),
   })
   .refine(

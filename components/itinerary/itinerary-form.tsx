@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
@@ -174,15 +175,36 @@ function MapCoordPicker({
       : null,
   );
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const reactId = React.useId();
+  const gridId = `itinerary-map-grid-${reactId}`;
 
   const placeFromEvent = (e: React.MouseEvent<SVGSVGElement>) => {
     const svg = svgRef.current;
     if (!svg) return;
     const rect = svg.getBoundingClientRect();
-    const ratioX = (e.clientX - rect.left) / rect.width;
-    const ratioY = (e.clientY - rect.top) / rect.height;
-    const x = Math.max(0, Math.min(100, Math.round(ratioX * 1000) / 10));
-    const y = Math.max(0, Math.min(75, Math.round(ratioY * 750) / 10));
+    if (rect.width === 0 || rect.height === 0) return;
+    // SVG ユーザー座標 (viewBox 0 0 100 75) に正規化する。preserveAspectRatio が
+    // "xMidYMid meet" のためレターボックスを考慮した座標変換が必要。
+    const elementRatio = rect.width / rect.height;
+    const viewBoxRatio = 100 / 75;
+    let usableW = rect.width;
+    let usableH = rect.height;
+    let offsetX = 0;
+    let offsetY = 0;
+    if (elementRatio > viewBoxRatio) {
+      usableW = rect.height * viewBoxRatio;
+      offsetX = (rect.width - usableW) / 2;
+    } else if (elementRatio < viewBoxRatio) {
+      usableH = rect.width / viewBoxRatio;
+      offsetY = (rect.height - usableH) / 2;
+    }
+    const localX = e.clientX - rect.left - offsetX;
+    const localY = e.clientY - rect.top - offsetY;
+    if (localX < 0 || localY < 0 || localX > usableW || localY > usableH) {
+      return;
+    }
+    const x = Math.max(0, Math.min(100, Math.round((localX / usableW) * 1000) / 10));
+    const y = Math.max(0, Math.min(75, Math.round((localY / usableH) * 750) / 10));
     setCoord({ x, y });
   };
 
@@ -203,7 +225,7 @@ function MapCoordPicker({
       >
         <defs>
           <pattern
-            id="itinerary-map-grid"
+            id={gridId}
             width="5"
             height="5"
             patternUnits="userSpaceOnUse"
@@ -217,7 +239,7 @@ function MapCoordPicker({
             />
           </pattern>
         </defs>
-        <rect width="100" height="75" fill="url(#itinerary-map-grid)" />
+        <rect width="100" height="75" fill={`url(#${gridId})`} />
         {coord && (
           <g>
             <circle

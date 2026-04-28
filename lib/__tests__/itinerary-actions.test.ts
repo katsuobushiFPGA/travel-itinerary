@@ -218,4 +218,35 @@ describe("parseItineraryForm", () => {
       expect(fieldErrors.mapX?.[0]).toMatch(/0〜100/);
     }
   });
+
+  it("mapY が範囲外（>75）はエラー", async () => {
+    const fd = makeFormData({
+      dayIndex: "1",
+      startTime: "09:00",
+      title: "集合",
+      mapX: "50",
+      mapY: "80",
+    });
+    const result = await parseItineraryForm(fd);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      expect(fieldErrors.mapY?.[0]).toMatch(/0〜75/);
+    }
+  });
+
+  it("mapY のみ指定もペア整合性エラー（mapX 側に出る）", async () => {
+    const fd = makeFormData({
+      dayIndex: "1",
+      startTime: "09:00",
+      title: "集合",
+      mapY: "30",
+    });
+    const result = await parseItineraryForm(fd);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const fieldErrors = result.error.flatten().fieldErrors;
+      expect(fieldErrors.mapX?.[0]).toMatch(/X \/ Y/);
+    }
+  });
 });

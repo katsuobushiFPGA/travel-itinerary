@@ -91,14 +91,30 @@ export function BookletV4({ data }: { data: BookletData }) {
     setCurrentIdx((i) => (i + 1) % order.length);
   };
 
+  const scrollTimer = React.useRef<number | null>(null);
+  React.useEffect(
+    () => () => {
+      if (scrollTimer.current !== null) {
+        window.clearTimeout(scrollTimer.current);
+      }
+    },
+    [],
+  );
+
   const handlePickPin = (id: string) => {
     const found = order.find((o) => o.id === id);
     if (!found) return;
     setOpenSection(`day-${found.day}`);
-    requestAnimationFrame(() => {
+    if (scrollTimer.current !== null) {
+      window.clearTimeout(scrollTimer.current);
+    }
+    // アコーディオンの max-height transition (0.36s) 完了を待ってから
+    // スクロール先を計算する
+    scrollTimer.current = window.setTimeout(() => {
       const el = document.getElementById(rowDomId(id));
       el?.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
+      scrollTimer.current = null;
+    }, 380);
   };
 
   const currentTitle = currentItem ? findTitle(data, currentItem.id) : "";

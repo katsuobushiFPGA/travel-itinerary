@@ -23,6 +23,8 @@ export function BookletMap({
   onPickPin: (id: string) => void;
 }) {
   const [activeId, setActiveId] = React.useState<string | null>(null);
+  const reactId = React.useId();
+  const gridId = `bookletv4-map-grid-${reactId}`;
 
   const dayGroups = React.useMemo(() => {
     const m = new Map<number, MapPin[]>();
@@ -54,7 +56,7 @@ export function BookletMap({
       >
         <defs>
           <pattern
-            id="bookletv4-map-grid"
+            id={gridId}
             width="5"
             height="5"
             patternUnits="userSpaceOnUse"
@@ -68,7 +70,7 @@ export function BookletMap({
             />
           </pattern>
         </defs>
-        <rect width="100" height="75" fill="url(#bookletv4-map-grid)" />
+        <rect width="100" height="75" fill={`url(#${gridId})`} />
 
         {dayGroups.map(({ day, pins: ps }) => {
           if (ps.length < 2) return null;
@@ -94,11 +96,21 @@ export function BookletMap({
           const accent = dayAccent(p.day);
           const isCurrent = currentPinId === p.id;
           const isActive = activeId === p.id;
+          const ariaLabel = `${p.day}日目 ${p.label}${p.hint ? ` (${p.hint})` : ""}`;
           return (
             <g
               key={p.id}
+              role="button"
+              tabIndex={0}
+              aria-label={ariaLabel}
               onClick={() => handlePick(p.id)}
-              style={{ cursor: "pointer" }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handlePick(p.id);
+                }
+              }}
+              style={{ cursor: "pointer", outline: "none" }}
             >
               {isCurrent && (
                 <circle
