@@ -2,8 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { tripDurationDays } from "@/lib/date-utils";
 import { itineraryItemInputSchema } from "@/lib/validators";
 import type { ParsedItineraryLine } from "@/lib/itinerary-parser";
+
+const MAX_BULK_ITEMS = 500;
 
 type FormState = {
   ok: boolean;
@@ -105,6 +108,20 @@ export async function createItineraryItemsBulk(
   if (items.length === 0) {
     return { ok: false, created: 0, error: "追加対象がありません" };
   }
+  if (items.length > MAX_BULK_ITEMS) {
+    return {
+      ok: false,
+      created: 0,
+      error: `一度に登録できるのは ${MAX_BULK_ITEMS} 件までです`,
+    };
+  }
+
+  const trip = await prisma.trip.findUnique({ where: { id: tripId } });
+  if (!trip) {
+    return { ok: false, created: 0, error: "旅程が見つかりません" };
+  }
+  const maxDay = tripDurationDays(trip.startDate, trip.endDate);
+
   const validated: Array<{
     dayIndex: number;
     startTime: string;
@@ -134,6 +151,14 @@ export async function createItineraryItemsBulk(
         failedLine: i + 1,
       };
     }
+    if (parsed.data.dayIndex > maxDay) {
+      return {
+        ok: false,
+        created: 0,
+        error: `${i + 1} 件目: Day ${parsed.data.dayIndex} は旅程の範囲外です（最大 ${maxDay}）`,
+        failedLine: i + 1,
+      };
+    }
     validated.push({
       dayIndex: parsed.data.dayIndex,
       startTime: parsed.data.startTime,
@@ -143,16 +168,21 @@ export async function createItineraryItemsBulk(
     });
   }
 
-  const result = await prisma.itineraryItem.createMany({
-    data: validated.map((v) => ({
-      tripId,
-      dayIndex: v.dayIndex,
-      startTime: v.startTime,
-      endTime: v.endTime,
-      title: v.title,
-      location: v.location,
-    })),
-  });
+  let result: { count: number };
+  try {
+    result = await prisma.itineraryItem.createMany({
+      data: validated.map((v) => ({
+        tripId,
+        dayIndex: v.dayIndex,
+        startTime: v.startTime,
+        endTime: v.endTime,
+        title: v.title,
+        location: v.location,
+      })),
+    });
+  } catch {
+    return { ok: false, created: 0, error: "保存に失敗しました" };
+  }
   revalidatePath(`/trips/${tripId}/itinerary`);
   return { ok: true, created: result.count };
 }

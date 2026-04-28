@@ -52,8 +52,8 @@ export async function searchPlaces(query: string): Promise<PlaceCandidate[]> {
     const r = raw as Record<string, unknown>;
     const display = typeof r.display_name === "string" ? r.display_name : null;
     if (!display) continue;
-    const head = display.split(",")[0]?.trim() || display;
-    out.push({ name: head, address: display });
+    const primaryName = display.split(",")[0]?.trim() || display;
+    out.push({ name: primaryName, address: display });
   }
   return out;
 }

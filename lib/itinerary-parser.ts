@@ -108,6 +108,14 @@ export function parseBulkItinerary(
 
     let title = rest.trim();
     let location: string | undefined;
+    if (title.startsWith("@")) {
+      errors.push({
+        line: lineNo,
+        raw: trimmed,
+        message: "タイトルが空です",
+      });
+      return;
+    }
     const at = TITLE_AT_LOCATION_RE.exec(title);
     if (at) {
       title = at[1].trim();

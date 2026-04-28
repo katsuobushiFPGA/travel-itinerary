@@ -75,10 +75,31 @@ describe("parseBulkItinerary", () => {
     expect(r.errors[0].message).toMatch(/開始時刻以降/);
   });
 
-  it("タイトル空はエラー", () => {
+  it("タイトル空はエラー (タイトルとロケーションの間に空白あり)", () => {
     const r = parseBulkItinerary("09:00 @東京駅");
     expect(r.items).toEqual([]);
     expect(r.errors[0].message).toMatch(/タイトル/);
+  });
+
+  it("タイトル空はエラー (空白なしで @ のみ)", () => {
+    // "@東京駅" 単独だと最初の空白分割で title="@東京駅" となるため
+    // startsWith("@") の早期判定が効くか確認する回帰ケース
+    const r = parseBulkItinerary("09:00 @東京駅のみ");
+    expect(r.items).toEqual([]);
+    expect(r.errors[0].message).toMatch(/タイトル/);
+  });
+
+  it("CRLF 改行も正しく行分割される", () => {
+    const r = parseBulkItinerary("09:00 集合\r\n10:00 出発");
+    expect(r.errors).toEqual([]);
+    expect(r.items.length).toBe(2);
+  });
+
+  it("Day 0 を指定してもパーサは通すが day=0 として記録される", () => {
+    // 範囲チェックは UI / Server Action 側で行う設計
+    const r = parseBulkItinerary("Day 0\n09:00 集合");
+    expect(r.errors).toEqual([]);
+    expect(r.items[0].day).toBe(0);
   });
 
   it("@location は最初の @ で末尾分離される", () => {
