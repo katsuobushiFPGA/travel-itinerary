@@ -17,6 +17,8 @@ type ItineraryItem = {
   location: string | null;
   url: string | null;
   note: string | null;
+  mapX: number | null;
+  mapY: number | null;
   sortOrder: number;
 };
 
@@ -92,6 +94,8 @@ export function ItineraryDaySection({
                       location: item.location,
                       url: item.url,
                       note: item.note,
+                      mapX: item.mapX,
+                      mapY: item.mapY,
                     }}
                     totalDays={totalDays}
                   />

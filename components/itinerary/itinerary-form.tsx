@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,8 @@ type ItemDefaults = {
   location?: string | null;
   url?: string | null;
   note?: string | null;
+  mapX?: number | null;
+  mapY?: number | null;
 };
 
 function SubmitButton({ label }: { label: string }) {
@@ -148,6 +150,119 @@ function ItineraryFields({
         />
         <FieldError messages={fieldErrors?.note} />
       </div>
+      <MapCoordPicker
+        defaultX={defaults?.mapX ?? null}
+        defaultY={defaults?.mapY ?? null}
+        fieldErrors={fieldErrors}
+      />
+    </div>
+  );
+}
+
+function MapCoordPicker({
+  defaultX,
+  defaultY,
+  fieldErrors,
+}: {
+  defaultX: number | null;
+  defaultY: number | null;
+  fieldErrors?: Record<string, string[]>;
+}) {
+  const [coord, setCoord] = useState<{ x: number; y: number } | null>(
+    defaultX !== null && defaultY !== null
+      ? { x: defaultX, y: defaultY }
+      : null,
+  );
+  const svgRef = useRef<SVGSVGElement | null>(null);
+
+  const placeFromEvent = (e: React.MouseEvent<SVGSVGElement>) => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    const ratioX = (e.clientX - rect.left) / rect.width;
+    const ratioY = (e.clientY - rect.top) / rect.height;
+    const x = Math.max(0, Math.min(100, Math.round(ratioX * 1000) / 10));
+    const y = Math.max(0, Math.min(75, Math.round(ratioY * 750) / 10));
+    setCoord({ x, y });
+  };
+
+  return (
+    <div>
+      <Label>マップ座標</Label>
+      <p className="text-xs text-muted-foreground mb-1.5">
+        プレビュー上をクリックしてピンを置きます。未配置のままでも保存できます。
+      </p>
+      <svg
+        ref={svgRef}
+        viewBox="0 0 100 75"
+        preserveAspectRatio="xMidYMid meet"
+        onClick={placeFromEvent}
+        className="w-full h-40 rounded-md border bg-muted/30 cursor-crosshair"
+        role="img"
+        aria-label="マップ座標プレビュー"
+      >
+        <defs>
+          <pattern
+            id="itinerary-map-grid"
+            width="5"
+            height="5"
+            patternUnits="userSpaceOnUse"
+          >
+            <path
+              d="M 5 0 L 0 0 0 5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="0.15"
+              opacity="0.2"
+            />
+          </pattern>
+        </defs>
+        <rect width="100" height="75" fill="url(#itinerary-map-grid)" />
+        {coord && (
+          <g>
+            <circle
+              cx={coord.x}
+              cy={coord.y}
+              r="2.4"
+              fill="#c94a3b"
+              stroke="#fbf6ec"
+              strokeWidth="0.6"
+            />
+            <circle
+              cx={coord.x}
+              cy={coord.y}
+              r="4.4"
+              fill="none"
+              stroke="#c94a3b"
+              strokeWidth="0.4"
+              strokeDasharray="0.8 0.6"
+            />
+          </g>
+        )}
+      </svg>
+      <div className="mt-1.5 flex items-center gap-3 text-xs">
+        {coord ? (
+          <span className="tabular-nums text-muted-foreground">
+            X: {coord.x.toFixed(1)} / Y: {coord.y.toFixed(1)}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">未配置</span>
+        )}
+        {coord && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setCoord(null)}
+          >
+            クリア
+          </Button>
+        )}
+      </div>
+      <input type="hidden" name="mapX" value={coord ? String(coord.x) : ""} />
+      <input type="hidden" name="mapY" value={coord ? String(coord.y) : ""} />
+      <FieldError messages={fieldErrors?.mapX} />
+      <FieldError messages={fieldErrors?.mapY} />
     </div>
   );
 }
