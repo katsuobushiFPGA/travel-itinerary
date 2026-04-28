@@ -327,7 +327,7 @@ function Section({
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [isOpen]);
+  }, []);
 
   return (
     <div
