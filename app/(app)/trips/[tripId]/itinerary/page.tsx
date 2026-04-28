@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { tripDurationDays } from "@/lib/date-utils";
 import { CreateItineraryDialog } from "@/components/itinerary/itinerary-form";
+import { BulkAddItineraryDialog } from "@/components/itinerary/itinerary-bulk-add-dialog";
 import { ItineraryDaySection } from "@/components/itinerary/itinerary-day-section";
 
 export default async function ItineraryPage({
@@ -23,7 +24,8 @@ export default async function ItineraryPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <BulkAddItineraryDialog tripId={tripId} totalDays={totalDays} />
         <CreateItineraryDialog tripId={tripId} totalDays={totalDays} />
       </div>
       <div className="space-y-4">

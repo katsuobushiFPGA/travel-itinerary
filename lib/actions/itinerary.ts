@@ -3,11 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { itineraryItemInputSchema } from "@/lib/validators";
+import type { ParsedItineraryLine } from "@/lib/itinerary-parser";
 
 type FormState = {
   ok: boolean;
   error?: string;
   fieldErrors?: Record<string, string[]>;
+};
+
+type BulkResult = {
+  ok: boolean;
+  created: number;
+  error?: string;
+  failedLine?: number;
 };
 
 export async function parseItineraryForm(formData: FormData) {
@@ -88,6 +96,65 @@ export async function updateItineraryItem(
   });
   revalidatePath(`/trips/${item.tripId}/itinerary`);
   return { ok: true };
+}
+
+export async function createItineraryItemsBulk(
+  tripId: string,
+  items: ParsedItineraryLine[],
+): Promise<BulkResult> {
+  if (items.length === 0) {
+    return { ok: false, created: 0, error: "追加対象がありません" };
+  }
+  const validated: Array<{
+    dayIndex: number;
+    startTime: string;
+    endTime: string | null;
+    title: string;
+    location: string | null;
+  }> = [];
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    const parsed = itineraryItemInputSchema.safeParse({
+      dayIndex: String(item.day),
+      startTime: item.startTime,
+      endTime: item.endTime ?? "",
+      title: item.title,
+      location: item.location ?? "",
+      url: "",
+      note: "",
+      mapX: "",
+      mapY: "",
+    });
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      return {
+        ok: false,
+        created: 0,
+        error: `${i + 1} 件目「${item.title || "(無題)"}」: ${first?.message ?? "入力エラー"}`,
+        failedLine: i + 1,
+      };
+    }
+    validated.push({
+      dayIndex: parsed.data.dayIndex,
+      startTime: parsed.data.startTime,
+      endTime: parsed.data.endTime ?? null,
+      title: parsed.data.title,
+      location: parsed.data.location ?? null,
+    });
+  }
+
+  const result = await prisma.itineraryItem.createMany({
+    data: validated.map((v) => ({
+      tripId,
+      dayIndex: v.dayIndex,
+      startTime: v.startTime,
+      endTime: v.endTime,
+      title: v.title,
+      location: v.location,
+    })),
+  });
+  revalidatePath(`/trips/${tripId}/itinerary`);
+  return { ok: true, created: result.count };
 }
 
 export async function deleteItineraryItem(
