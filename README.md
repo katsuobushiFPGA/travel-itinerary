@@ -120,7 +120,7 @@ departure/
 - **日付扱い**: SQLite の `DateTime` は内部的に文字列なので、UI では `toISOString().slice(0,10)` で `yyyy-MM-dd` 部分のみ扱う。
 - **共有しおり (BookletV4)**: `app/(share)` 配下は専用ルートグループで、Yomogi / Kaisei Decol を Google Fonts CSS 経由で読み込む。アコーディオンは `max-height` 遷移 (0.36s)。ピンクリックでセクションを開いてから 380ms 待ってスクロール (transition 完了後)。`prefers-reduced-motion` は遅延 0ms に短絡。
 - **マップ座標系**: `mapX` ∈ [0, 100], `mapY` ∈ [0, 75]。`MapCoordPicker` は `preserveAspectRatio="xMidYMid meet"` のレターボックスを補正してクリック位置を SVG ユーザー座標に変換する。
-- **Nominatim 利用ポリシー**: `searchPlaces` Server Action は OSM Nominatim (1 req/s, User-Agent 必須) を呼ぶ。`LocationCombobox` は 350ms debounce + stale 応答破棄でクライアント側のリクエストを抑制している。本番運用で利用が増える場合はキャッシュ層 (Vercel Runtime Cache など) かセルフホスト Nominatim への切替を検討する。
+- **Nominatim 利用ポリシー**: `searchPlaces` Server Action は OSM Nominatim (1 req/s, User-Agent 必須) を呼ぶ。`LocationCombobox` は 350ms debounce + stale 応答破棄でクライアント側のリクエストを抑制している。さらにサーバ側で `TtlLruCache`（プロセスローカル、最大 256 クエリ・TTL 10 分）を持ち、同一クエリの再呼び出しを Nominatim まで届かせない。一過性のネットワークエラー応答はキャッシュせず次回再試行する。本番運用で同時利用者が増える場合は Vercel Runtime Cache などプロセス越境のキャッシュかセルフホスト Nominatim への切替を検討する。
 
 ## Agent Teams 実装ログ
 
@@ -145,5 +145,7 @@ npm test
 - `lib/__tests__/itinerary-actions.test.ts` : `parseItineraryForm`
 - `lib/__tests__/itinerary-parser.test.ts` : 旅程の一括入力テキストパーサ
 - `lib/__tests__/packing-parser.test.ts` : 持ち物の一括入力テキストパーサ
+- `lib/__tests__/places-cache.test.ts` : Nominatim 結果キャッシュ (TTL + LRU)
+- `lib/__tests__/places-actions.test.ts` : `searchPlaces` のキャッシュ・並行 dedup・エラー時挙動
 
 DB に触れる部分 (Prisma 呼び出し) は単体テスト対象外。`npm run dev` + ブラウザ、または Prisma Studio で検証する。
