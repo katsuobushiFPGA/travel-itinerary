@@ -202,7 +202,9 @@
     text-decoration: underline;
   }
 
-  .booklet img {
+  .booklet img,
+  .bookletv4-hero,
+  .bookletv4-hero > * {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }

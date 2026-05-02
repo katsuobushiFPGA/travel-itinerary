@@ -29,7 +29,7 @@ type DayBlock = {
 
 type PackingGroup = {
   category: string;
-  items: { id: string; name: string; quantity: number }[];
+  items: { id: string; name: string; quantity: number; checked: boolean }[];
 };
 
 export type BookletData = {
@@ -72,11 +72,16 @@ export function BookletV4({ data }: { data: BookletData }) {
       })),
   );
 
-  const initialOpen =
-    data.days.length > 0 ? `day-${data.days[0].day}` : "cover";
-
-  const [openSection, setOpenSection] = React.useState<string | null>(
-    initialOpen,
+  const [openSection, setOpenSection] = React.useState<string | null>(() =>
+    data.days.length > 0
+      ? `day-${data.days[0].day}`
+      : data.members.length > 0
+        ? "members"
+        : data.memo
+          ? "memo"
+          : data.packing.length > 0
+            ? "packing"
+            : null,
   );
   const [currentIdx, setCurrentIdx] = React.useState(0);
 
@@ -135,6 +140,13 @@ export function BookletV4({ data }: { data: BookletData }) {
       className="mx-auto w-full max-w-[480px] px-3 pb-24 pt-3 sm:px-4"
       style={{ fontFamily: "var(--font-yomogi)" }}
     >
+      <CoverHero
+        title={data.title}
+        destination={data.destination}
+        dates={data.dates}
+        totalDays={data.totalDays}
+        coverImage={data.coverImage}
+      />
       {pins.length > 0 && (
         <div className="bookletv4-map-sticky sticky top-0 z-20 -mx-3 px-3 pt-3 pb-2 sm:-mx-4 sm:px-4 backdrop-blur-sm bg-background/85 mb-3">
           <BookletMap
@@ -145,45 +157,6 @@ export function BookletV4({ data }: { data: BookletData }) {
           />
         </div>
       )}
-      <Section
-        id="cover"
-        openSection={openSection}
-        setOpen={setOpenSection}
-        icon="🏯"
-        title="表紙"
-        sub={data.dates}
-      >
-        <div className="flex gap-3 items-start">
-          {data.coverImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={data.coverImage}
-              alt=""
-              className="w-24 h-24 rounded-lg object-cover shrink-0 border"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-lg bg-muted shrink-0 grid place-items-center text-xs text-muted-foreground border">
-              表紙写真
-            </div>
-          )}
-          <div className="min-w-0 flex-1">
-            <h1
-              className="text-xl font-bold leading-tight"
-              style={{ fontFamily: "var(--font-kaisei)" }}
-            >
-              {data.title}
-            </h1>
-            {data.destination && (
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {data.destination}
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground mt-1">
-              {data.dates}（{data.totalDays}日間）
-            </p>
-          </div>
-        </div>
-      </Section>
 
       {data.members.length > 0 && (
         <Section
@@ -275,40 +248,11 @@ export function BookletV4({ data }: { data: BookletData }) {
       })}
 
       {data.packing.length > 0 && (
-        <Section
-          id="packing"
+        <PackingSection
+          packing={data.packing}
           openSection={openSection}
           setOpen={setOpenSection}
-          icon="🎒"
-          title="持ち物"
-          sub="チェック"
-        >
-          <div className="space-y-3">
-            {data.packing.map((g) => (
-              <div key={g.category}>
-                <div
-                  className="font-semibold text-sm mb-1"
-                  style={{ fontFamily: "var(--font-kaisei)" }}
-                >
-                  {g.category}
-                </div>
-                <ul className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-sm">
-                  {g.items.map((p) => (
-                    <li key={p.id} className="flex items-baseline gap-1.5">
-                      <span className="text-muted-foreground">□</span>
-                      <span>{p.name}</span>
-                      {p.quantity > 1 && (
-                        <span className="text-xs text-muted-foreground">
-                          ×{p.quantity}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </Section>
+        />
       )}
 
       {currentItem && (
@@ -343,6 +287,131 @@ export function BookletV4({ data }: { data: BookletData }) {
         </button>
       )}
     </div>
+  );
+}
+
+function PackingSection({
+  packing,
+  openSection,
+  setOpen,
+}: {
+  packing: PackingGroup[];
+  openSection: string | null;
+  setOpen: (id: string | null) => void;
+}) {
+  let totalCount = 0;
+  let checkedCount = 0;
+  for (const g of packing) {
+    totalCount += g.items.length;
+    for (const it of g.items) {
+      if (it.checked) checkedCount += 1;
+    }
+  }
+
+  return (
+    <Section
+      id="packing"
+      openSection={openSection}
+      setOpen={setOpen}
+      icon="🎒"
+      title="持ち物"
+      sub={`${checkedCount} / ${totalCount} 完了`}
+    >
+      <div className="space-y-3">
+        {packing.map((g) => (
+          <div key={g.category}>
+            <div
+              className="font-semibold text-sm mb-1"
+              style={{ fontFamily: "var(--font-kaisei)" }}
+            >
+              {g.category}
+            </div>
+            <ul className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-sm">
+              {g.items.map((p) => (
+                <li
+                  key={p.id}
+                  className={`flex items-baseline gap-1.5${p.checked ? " text-muted-foreground" : ""}`}
+                >
+                  <span aria-hidden>{p.checked ? "☑" : "□"}</span>
+                  <span className={p.checked ? "line-through" : ""}>
+                    {p.name}
+                  </span>
+                  {p.quantity > 1 && (
+                    <span className="text-xs text-muted-foreground">
+                      ×{p.quantity}
+                    </span>
+                  )}
+                  {p.checked && <span className="sr-only">（完了）</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function CoverHero({
+  title,
+  destination,
+  dates,
+  totalDays,
+  coverImage,
+}: {
+  title: string;
+  destination: string | null;
+  dates: string;
+  totalDays: number;
+  coverImage: string | null;
+}) {
+  return (
+    <header className="bookletv4-hero relative -mx-3 sm:-mx-4 mb-3 h-[200px] sm:h-[220px] overflow-hidden">
+      {coverImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={coverImage}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      ) : (
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              "linear-gradient(135deg, #c94a3b 0%, #8a4a8a 60%, #2a2622 100%)",
+          }}
+        />
+      )}
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.25) 50%, rgba(0,0,0,0.05) 100%)",
+        }}
+      />
+      <div className="absolute inset-x-0 bottom-0 px-4 pb-4 text-white">
+        <h1
+          className="text-2xl font-bold leading-tight drop-shadow-sm"
+          style={{ fontFamily: "var(--font-kaisei)" }}
+        >
+          {title}
+        </h1>
+        {destination && (
+          <p className="text-sm mt-1 opacity-90 drop-shadow-sm">
+            {destination}
+          </p>
+        )}
+        <p
+          className="text-[11px] tracking-[0.18em] uppercase mt-2 opacity-85 drop-shadow-sm"
+          style={{ fontFamily: "var(--font-kaisei)" }}
+        >
+          {dates}・{totalDays}days
+        </p>
+      </div>
+    </header>
   );
 }
 

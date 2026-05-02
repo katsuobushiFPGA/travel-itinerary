@@ -86,6 +86,7 @@ export default async function SharedBookletPage({
         id: p.id,
         name: p.name,
         quantity: p.quantity,
+        checked: p.checked,
       })),
     }),
   );
