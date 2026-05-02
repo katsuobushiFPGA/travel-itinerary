@@ -13,7 +13,7 @@
 - **サマリー**: しおり概要タブで参加メンバー/旅程/持ち物の件数を一望。
 - **共有しおり (`/s/<token>`)**: トークン発行で第三者と共有可能。タイムライン型アコーディオン + 日色分けの sticky マップ + NOW/NEXT 案内チップを備えたモバイル最適化ビュー。`@media print` で全セクション展開＋マップ非表示の印刷スタイルに切り替わる。
 - **マップ座標エディタ**: 旅程アイテムごとに SVG プレビュー上をクリックしてピンを配置。共有しおり側のマップに反映され、ピンタップで対応する行へスクロールする。
-- **テキストで一括追加**: 旅程画面の「テキストで一括追加」ダイアログに `Day N` ヘッダ + `HH:MM[-HH:MM] タイトル @場所` 形式の複数行を貼り付けて、1 リクエストで最大 500 件まで作成。プレビューで件数とエラー行が見える。
+- **テキストで一括追加**: 旅程画面の「テキストで一括追加」ダイアログに `Day N` ヘッダ + `HH:MM[-HH:MM] タイトル @場所` 形式の複数行を貼り付けて、1 リクエストで最大 500 件まで作成。プレビューで件数とエラー行が見える。持ち物画面でも同様に `# カテゴリ名` ヘッダ + `名前 [xN|×N] [@担当者]` の複数行を貼り付け、最大 500 件まで一括追加できる。
 - **ロケーション autocomplete**: 旅程アイテムの「場所」入力で 2 文字以上タイプすると Nominatim (OpenStreetMap) を引いて候補を 5 件まで表示。↑↓ + Enter で選択。
 
 ## 技術スタック
@@ -143,6 +143,7 @@ npm test
 - `lib/__tests__/members-actions.test.ts` : `parseMemberForm`
 - `lib/__tests__/packing-actions.test.ts` : `parsePackingForm`
 - `lib/__tests__/itinerary-actions.test.ts` : `parseItineraryForm`
-- `lib/__tests__/itinerary-parser.test.ts` : 一括入力テキストパーサ
+- `lib/__tests__/itinerary-parser.test.ts` : 旅程の一括入力テキストパーサ
+- `lib/__tests__/packing-parser.test.ts` : 持ち物の一括入力テキストパーサ
 
 DB に触れる部分 (Prisma 呼び出し) は単体テスト対象外。`npm run dev` + ブラウザ、または Prisma Studio で検証する。
