@@ -6,6 +6,7 @@ import {
   CreatePackingItemDialog,
   EditPackingItemDialog,
 } from "@/components/packing/packing-form";
+import { BulkAddPackingDialog } from "@/components/packing/packing-bulk-add-dialog";
 
 export default async function PackingPage({
   params,
@@ -57,7 +58,10 @@ export default async function PackingPage({
             </p>
           )}
         </div>
-        <CreatePackingItemDialog tripId={tripId} />
+        <div className="flex gap-2">
+          <BulkAddPackingDialog tripId={tripId} />
+          <CreatePackingItemDialog tripId={tripId} />
+        </div>
       </div>
 
       {total === 0 ? (
