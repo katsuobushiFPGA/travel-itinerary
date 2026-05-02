@@ -11,7 +11,7 @@
 - **旅程スケジュール**: 日別タイムライン。開始/終了時刻 (HH:mm) ・タイトル・場所・URL・メモ・マップ座標 (mapX/mapY)。
 - **持ち物リスト**: カテゴリ別グルーピング、担当者、数量、チェックボックスで荷造り状況を管理。
 - **サマリー**: しおり概要タブで参加メンバー/旅程/持ち物の件数を一望。
-- **共有しおり (`/s/<token>`)**: トークン発行で第三者と共有可能。タイムライン型アコーディオン + 日色分けの sticky マップ + NOW/NEXT 案内チップを備えたモバイル最適化ビュー。`@media print` で全セクション展開＋マップ非表示の印刷スタイルに切り替わる。
+- **共有しおり (`/s/<token>`)**: トークン発行で第三者と共有可能。フルブリードのカバー画像ヒーロー（カバー未設定時はアクセントグラデにフォールバック）+ タイムライン型アコーディオン + 日色分けの sticky マップ + NOW/NEXT 案内チップを備えたモバイル最適化ビュー。持ち物セクションは閲覧専用で `☑/□` のチェック状態と「X / Y 完了」進捗を表示する。`@media print` で全セクション展開＋マップ非表示の印刷スタイルに切り替わる。
 - **マップ座標エディタ**: 旅程アイテムごとに SVG プレビュー上をクリックしてピンを配置。共有しおり側のマップに反映され、ピンタップで対応する行へスクロールする。
 - **テキストで一括追加**: 旅程画面の「テキストで一括追加」ダイアログに `Day N` ヘッダ + `HH:MM[-HH:MM] タイトル @場所` 形式の複数行を貼り付けて、1 リクエストで最大 500 件まで作成。プレビューで件数とエラー行が見える。持ち物画面でも同様に `# カテゴリ名` ヘッダ + `名前 [xN|×N] [@担当者]` の複数行を貼り付け、最大 500 件まで一括追加できる。
 - **ロケーション autocomplete**: 旅程アイテムの「場所」入力で 2 文字以上タイプすると Nominatim (OpenStreetMap) を引いて候補を 5 件まで表示。↑↓ + Enter で選択。
@@ -118,7 +118,7 @@ departure/
 - **Server Actions**: `"use server"` 指定されたファイル内の export は**すべて async 関数**でなければならない (Next.js 16)。フォーム値のパースヘルパ `parseXxxForm` も例外ではなく、呼び出し側で `await` が必須。
 - **Base UI の checkbox**: `@base-ui/react` の Checkbox は表示用要素と hidden input の 2 層構造。Playwright で操作する際は表示側 (`[checked]` を持つロール要素) をクリックする。
 - **日付扱い**: SQLite の `DateTime` は内部的に文字列なので、UI では `toISOString().slice(0,10)` で `yyyy-MM-dd` 部分のみ扱う。
-- **共有しおり (BookletV4)**: `app/(share)` 配下は専用ルートグループで、Yomogi / Kaisei Decol を Google Fonts CSS 経由で読み込む。アコーディオンは `max-height` 遷移 (0.36s)。ピンクリックでセクションを開いてから 380ms 待ってスクロール (transition 完了後)。`prefers-reduced-motion` は遅延 0ms に短絡。
+- **共有しおり (BookletV4)**: `app/(share)` 配下は専用ルートグループで、Yomogi / Kaisei Decol を Google Fonts CSS 経由で読み込む。`CoverHero` は `<img>` 背景 + 暗グラデオーバーレイで構成し、`@media print` 時にも `print-color-adjust: exact` でグラデを残す。アコーディオンは `max-height` 遷移 (0.36s)。ピンクリックでセクションを開いてから 380ms 待ってスクロール (transition 完了後)。`prefers-reduced-motion` は遅延 0ms に短絡。
 - **マップ座標系**: `mapX` ∈ [0, 100], `mapY` ∈ [0, 75]。`MapCoordPicker` は `preserveAspectRatio="xMidYMid meet"` のレターボックスを補正してクリック位置を SVG ユーザー座標に変換する。
 - **Nominatim 利用ポリシー**: `searchPlaces` Server Action は OSM Nominatim (1 req/s, User-Agent 必須) を呼ぶ。`LocationCombobox` は 350ms debounce + stale 応答破棄でクライアント側のリクエストを抑制している。さらにサーバ側で `TtlLruCache`（プロセスローカル、最大 256 クエリ・TTL 10 分）を持ち、同一クエリの再呼び出しを Nominatim まで届かせない。一過性のネットワークエラー応答はキャッシュせず次回再試行する。本番運用で同時利用者が増える場合は Vercel Runtime Cache などプロセス越境のキャッシュかセルフホスト Nominatim への切替を検討する。
 
