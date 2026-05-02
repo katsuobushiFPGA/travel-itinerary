@@ -7,11 +7,15 @@ const timeSchema = z
 
 export const tripInputSchema = z
   .object({
-    title: z.string().trim().min(1, "タイトルは必須です").max(100),
+    title: z
+      .string()
+      .trim()
+      .min(1, "タイトルは必須です")
+      .max(100, "100 文字以内で入力してください"),
     destination: z
       .string()
       .trim()
-      .max(200)
+      .max(200, "200 文字以内で入力してください")
       .optional()
       .transform((v) => (v === "" ? undefined : v)),
     startDate: z
@@ -22,13 +26,13 @@ export const tripInputSchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, "日付形式が不正です"),
     memo: z
       .string()
-      .max(2000)
+      .max(2000, "2000 文字以内で入力してください")
       .optional()
       .transform((v) => (v === "" ? undefined : v)),
     coverImage: z
       .string()
       .trim()
-      .max(2000)
+      .max(2000, "2000 文字以内で入力してください")
       .optional()
       .transform((v) => (v === "" ? undefined : v))
       .refine(
@@ -44,17 +48,21 @@ export const tripInputSchema = z
 export type TripInput = z.infer<typeof tripInputSchema>;
 
 export const memberInputSchema = z.object({
-  name: z.string().trim().min(1, "名前は必須です").max(100),
+  name: z
+    .string()
+    .trim()
+    .min(1, "名前は必須です")
+    .max(100, "100 文字以内で入力してください"),
   role: z
     .string()
     .trim()
-    .max(100)
+    .max(100, "100 文字以内で入力してください")
     .optional()
     .transform((v) => (v === "" ? undefined : v)),
   contact: z
     .string()
     .trim()
-    .max(200)
+    .max(200, "200 文字以内で入力してください")
     .optional()
     .transform((v) => (v === "" ? undefined : v)),
 });
@@ -71,17 +79,21 @@ export const itineraryItemInputSchema = z
       .refine((v) => v === undefined || timeRegex.test(v), {
         message: "HH:mm 形式で入力してください",
       }),
-    title: z.string().trim().min(1, "タイトルは必須です").max(200),
+    title: z
+      .string()
+      .trim()
+      .min(1, "タイトルは必須です")
+      .max(200, "200 文字以内で入力してください"),
     location: z
       .string()
       .trim()
-      .max(200)
+      .max(200, "200 文字以内で入力してください")
       .optional()
       .transform((v) => (v === "" ? undefined : v)),
     url: z
       .string()
       .trim()
-      .max(2000)
+      .max(2000, "2000 文字以内で入力してください")
       .optional()
       .transform((v) => (v === "" ? undefined : v))
       .refine(
@@ -91,7 +103,7 @@ export const itineraryItemInputSchema = z
     note: z
       .string()
       .trim()
-      .max(1000)
+      .max(1000, "1000 文字以内で入力してください")
       .optional()
       .transform((v) => (v === "" ? undefined : v)),
     // SVG ユーザー座標 (viewBox 0 0 100 75) で保存する
@@ -128,19 +140,28 @@ export const itineraryItemInputSchema = z
 export type ItineraryItemInput = z.infer<typeof itineraryItemInputSchema>;
 
 export const packingItemInputSchema = z.object({
-  name: z.string().trim().min(1, "名前は必須です").max(100),
+  name: z
+    .string()
+    .trim()
+    .min(1, "名前は必須です")
+    .max(100, "100 文字以内で入力してください"),
   category: z
     .string()
     .trim()
-    .max(50)
+    .max(50, "50 文字以内で入力してください")
     .optional()
     .transform((v) => (v === "" ? undefined : v)),
   owner: z
     .string()
     .trim()
-    .max(100)
+    .max(100, "100 文字以内で入力してください")
     .optional()
     .transform((v) => (v === "" ? undefined : v)),
-  quantity: z.coerce.number().int().min(1, "1 以上").max(9999).default(1),
+  quantity: z.coerce
+    .number()
+    .int()
+    .min(1, "1 以上を指定してください")
+    .max(9999, "9999 以下で指定してください")
+    .default(1),
 });
 export type PackingItemInput = z.infer<typeof packingItemInputSchema>;
