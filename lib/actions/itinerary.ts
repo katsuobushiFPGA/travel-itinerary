@@ -49,6 +49,7 @@ export async function createItineraryItem(
       error: "入力に誤りがあります",
     };
   }
+  const nextSortOrder = await nextDaySortOrder(tripId, parsed.data.dayIndex);
   await prisma.itineraryItem.create({
     data: {
       tripId,
@@ -61,10 +62,24 @@ export async function createItineraryItem(
       note: parsed.data.note,
       mapX: parsed.data.mapX ?? null,
       mapY: parsed.data.mapY ?? null,
+      sortOrder: nextSortOrder,
     },
   });
   revalidatePath(`/trips/${tripId}/itinerary`);
   return { ok: true };
+}
+
+// 指定 day の末尾に追加するときの sortOrder を返す。
+async function nextDaySortOrder(
+  tripId: string,
+  dayIndex: number,
+): Promise<number> {
+  const last = await prisma.itineraryItem.findFirst({
+    where: { tripId, dayIndex },
+    orderBy: { sortOrder: "desc" },
+    select: { sortOrder: true },
+  });
+  return last ? last.sortOrder + 1 : 0;
 }
 
 export async function updateItineraryItem(
@@ -169,23 +184,84 @@ export async function createItineraryItemsBulk(
     });
   }
 
+  // 各 day の現状の末尾 sortOrder を 1 度だけ取って、バッチ内ではローカルにインクリメント。
+  // 複数 day が含まれるケースは並行クエリで取りに行く。
+  const uniqueDays = Array.from(new Set(validated.map((v) => v.dayIndex)));
+  const dayCursorEntries = await Promise.all(
+    uniqueDays.map(
+      async (day) => [day, await nextDaySortOrder(tripId, day)] as const,
+    ),
+  );
+  const dayCursors = new Map<number, number>(dayCursorEntries);
+
   let result: { count: number };
   try {
     result = await prisma.itineraryItem.createMany({
-      data: validated.map((v) => ({
-        tripId,
-        dayIndex: v.dayIndex,
-        startTime: v.startTime,
-        endTime: v.endTime,
-        title: v.title,
-        location: v.location,
-      })),
+      data: validated.map((v) => {
+        const order = dayCursors.get(v.dayIndex) ?? 0;
+        dayCursors.set(v.dayIndex, order + 1);
+        return {
+          tripId,
+          dayIndex: v.dayIndex,
+          startTime: v.startTime,
+          endTime: v.endTime,
+          title: v.title,
+          location: v.location,
+          sortOrder: order,
+        };
+      }),
     });
   } catch {
     return { ok: false, created: 0, error: "保存に失敗しました" };
   }
   revalidatePath(`/trips/${tripId}/itinerary`);
   return { ok: true, created: result.count };
+}
+
+export async function reorderItineraryItems(
+  tripId: string,
+  dayIndex: number,
+  orderedIds: string[],
+): Promise<FormState> {
+  if (!Number.isInteger(dayIndex) || dayIndex < 1) {
+    return { ok: false, error: "Day が不正です" };
+  }
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+    return { ok: false, error: "並び替え対象がありません" };
+  }
+  if (new Set(orderedIds).size !== orderedIds.length) {
+    return { ok: false, error: "ID が重複しています" };
+  }
+
+  const items = await prisma.itineraryItem.findMany({
+    where: { tripId, dayIndex },
+    select: { id: true },
+  });
+  const existingIds = new Set(items.map((i) => i.id));
+  if (
+    existingIds.size !== orderedIds.length ||
+    orderedIds.some((id) => !existingIds.has(id))
+  ) {
+    return { ok: false, error: "対象アイテムの集合が一致しません" };
+  }
+
+  try {
+    await prisma.$transaction(
+      orderedIds.map((id, index) =>
+        prisma.itineraryItem.update({
+          // Prisma 5+ の extendedWhereUnique（安定機能）。tripId を where に含めることで
+          // 別 trip のアイテムが万一混じった場合に P2025 を投げて catch 側に流す。
+          where: { id, tripId },
+          data: { sortOrder: index },
+        }),
+      ),
+    );
+  } catch {
+    // チェック後にレコードが消えた等の TOCTOU で findMany〜update 間に整合が崩れた場合
+    return { ok: false, error: "並び替えの保存に失敗しました" };
+  }
+  revalidatePath(`/trips/${tripId}/itinerary`);
+  return { ok: true };
 }
 
 export async function deleteItineraryItem(

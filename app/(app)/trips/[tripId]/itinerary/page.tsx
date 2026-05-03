@@ -17,7 +17,12 @@ export default async function ItineraryPage({
 
   const items = await prisma.itineraryItem.findMany({
     where: { tripId },
-    orderBy: [{ dayIndex: "asc" }, { startTime: "asc" }],
+    orderBy: [
+      { dayIndex: "asc" },
+      { sortOrder: "asc" },
+      { startTime: "asc" },
+      { id: "asc" },
+    ],
   });
 
   const totalDays = tripDurationDays(trip.startDate, trip.endDate);
@@ -32,6 +37,7 @@ export default async function ItineraryPage({
         {Array.from({ length: totalDays }, (_, i) => i + 1).map((day) => (
           <ItineraryDaySection
             key={day}
+            tripId={tripId}
             day={day}
             items={items.filter((item) => item.dayIndex === day)}
             totalDays={totalDays}
