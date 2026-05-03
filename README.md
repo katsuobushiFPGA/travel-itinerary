@@ -8,7 +8,7 @@
 
 - **しおり (Trip) 管理**: 複数のしおりを作成・編集・削除。タイトル・目的地・期間・メモ・カバー画像・日別カバー画像を保持。
 - **参加メンバー**: メンバーの氏名・役割 (運転担当など)・連絡先を登録。
-- **旅程スケジュール**: 日別タイムライン。開始/終了時刻 (HH:mm) ・タイトル・場所・URL・メモ・マップ座標 (mapX/mapY)。各行のグリップハンドルから dnd-kit のドラッグで同一日内の並び替えに対応（並び順は `sortOrder` に保存）。
+- **旅程スケジュール**: 日別タイムライン。開始/終了時刻 (HH:mm) ・タイトル・場所・URL・メモ・マップ座標 (mapX/mapY)。各行のグリップハンドルから dnd-kit のドラッグで同一日内・他の日への移動に対応（並び順は `sortOrder`、所属日は `dayIndex` に保存）。空の日のセクションへもドロップできる。
 - **持ち物リスト**: カテゴリ別グルーピング、担当者、数量、チェックボックスで荷造り状況を管理。各カテゴリ内のアイテムは dnd-kit のドラッグで並び替え可能（カテゴリ移動は編集ダイアログで）。
 - **サマリー**: しおり概要タブと一覧カードで参加メンバー/旅程/持ち物の件数を一望。持ち物は「X / Y 完了 (Z%)」と進捗バーを表示し、100% で緑になる。
 - **共有しおり (`/s/<token>`)**: トークン発行で第三者と共有可能。フルブリードのカバー画像ヒーロー（カバー未設定時はアクセントグラデにフォールバック）+ タイムライン型アコーディオン + 日色分けの sticky マップ + NOW/NEXT 案内チップを備えたモバイル最適化ビュー。持ち物セクションは閲覧専用で `☑/□` のチェック状態と「X / Y 完了」進捗を表示する。共有リンクは `公開停止 / 公開再開` トグルで URL を維持したまま閲覧を遮断でき、`URLを削除` で完全に無効化（再発行は別 URL）。`@media print` で全セクション展開＋マップ非表示の印刷スタイルに切り替わる。
@@ -149,7 +149,7 @@ npm test
 - `lib/__tests__/packing-parser.test.ts` : 持ち物の一括入力テキストパーサ
 - `lib/__tests__/places-cache.test.ts` : Nominatim 結果キャッシュ (TTL + LRU)
 - `lib/__tests__/places-actions.test.ts` : `searchPlaces` のキャッシュ・並行 dedup・エラー時挙動
-- `lib/__tests__/itinerary-reorder.test.ts` : `reorderItineraryItems` の入力検証・集合一致・$transaction 失敗時のフォールバック
+- `lib/__tests__/itinerary-reorder-cross-day.test.ts` : 旅程の day 跨ぎ並び替え `reorderItineraryItemsCrossDay` の集合一致・dayIndex 範囲・$transaction フォールバック
 - `lib/__tests__/packing-reorder.test.ts` : `reorderPackingItems` の同等チェック（カテゴリ単位）
 - `lib/__tests__/itinerary-ical.test.ts` : iCal エクスポートの整形・URL インジェクション防止
 - `lib/__tests__/itinerary-csv.test.ts` : CSV エクスポートの quote/escape
