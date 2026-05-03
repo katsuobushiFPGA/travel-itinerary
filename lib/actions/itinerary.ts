@@ -218,46 +218,77 @@ export async function createItineraryItemsBulk(
   return { ok: true, created: result.count };
 }
 
-export async function reorderItineraryItems(
+// 旅程を day をまたいで並び替える Server Action。クライアント側で全 day 分の
+// `dayIndex → orderedIds` を組み立てて投げる。サーバ側で集合一致を検証してから
+// 各 item の dayIndex / sortOrder を $transaction で更新する。
+export async function reorderItineraryItemsCrossDay(
   tripId: string,
-  dayIndex: number,
-  orderedIds: string[],
+  perDayOrder: Record<string, string[]>,
 ): Promise<FormState> {
-  if (!Number.isInteger(dayIndex) || dayIndex < 1) {
-    return { ok: false, error: "Day が不正です" };
-  }
-  if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+  const entries = Object.entries(perDayOrder);
+  if (entries.length === 0) {
     return { ok: false, error: "並び替え対象がありません" };
   }
-  if (new Set(orderedIds).size !== orderedIds.length) {
+
+  // trip の期間（最大 day）を取得して dayIndex の上限検証に使う
+  const trip = await prisma.trip.findUnique({ where: { id: tripId } });
+  if (!trip) {
+    return { ok: false, error: "旅程が見つかりません" };
+  }
+  const maxDay = tripDurationDays(trip.startDate, trip.endDate);
+
+  // dayIndex の検証
+  const normalized: Array<{ day: number; ids: string[] }> = [];
+  for (const [dayKey, ids] of entries) {
+    const day = Number(dayKey);
+    if (!Number.isInteger(day) || day < 1 || day > maxDay) {
+      return { ok: false, error: "Day が不正です" };
+    }
+    if (!Array.isArray(ids)) {
+      return { ok: false, error: "並び替えデータが不正です" };
+    }
+    normalized.push({ day, ids });
+  }
+
+  // 全 ID を 1 つの集合に flatten。重複（同一日内・別日にまたがる重複どちらも）はエラー。
+  const allIds: string[] = [];
+  for (const e of normalized) {
+    for (const id of e.ids) allIds.push(id);
+  }
+  if (new Set(allIds).size !== allIds.length) {
     return { ok: false, error: "ID が重複しています" };
   }
 
-  const items = await prisma.itineraryItem.findMany({
-    where: { tripId, dayIndex },
+  // 既存 trip の旅程アイテム集合と完全一致を要求する。
+  const existing = await prisma.itineraryItem.findMany({
+    where: { tripId },
     select: { id: true },
   });
-  const existingIds = new Set(items.map((i) => i.id));
+  const existingSet = new Set(existing.map((i) => i.id));
   if (
-    existingIds.size !== orderedIds.length ||
-    orderedIds.some((id) => !existingIds.has(id))
+    existingSet.size !== allIds.length ||
+    allIds.some((id) => !existingSet.has(id))
   ) {
     return { ok: false, error: "対象アイテムの集合が一致しません" };
   }
 
+  // perDayOrder の順序通りに update。entries の登場順を尊重したいので Object.entries
+  // の順序保証を使う（ES2015+ の整数文字列キーは数値順、文字列順に並ぶことに留意）。
+  const updates: Array<{ id: string; day: number; sort: number }> = [];
+  for (const e of normalized) {
+    e.ids.forEach((id, sort) => updates.push({ id, day: e.day, sort }));
+  }
+
   try {
     await prisma.$transaction(
-      orderedIds.map((id, index) =>
+      updates.map((u) =>
         prisma.itineraryItem.update({
-          // Prisma 5+ の extendedWhereUnique（安定機能）。tripId を where に含めることで
-          // 別 trip のアイテムが万一混じった場合に P2025 を投げて catch 側に流す。
-          where: { id, tripId },
-          data: { sortOrder: index },
+          where: { id: u.id, tripId },
+          data: { dayIndex: u.day, sortOrder: u.sort },
         }),
       ),
     );
   } catch {
-    // チェック後にレコードが消えた等の TOCTOU で findMany〜update 間に整合が崩れた場合
     return { ok: false, error: "並び替えの保存に失敗しました" };
   }
   revalidatePath(`/trips/${tripId}/itinerary`);
