@@ -19,6 +19,9 @@ model Trip {
   coverImage     String?
   dayCoverImages String?
   shareToken     String?         @unique
+  // shareToken を維持したまま一時停止できるフラグ。/s/<token> アクセス時に
+  // false なら表示を拒否する。デフォルトは true（発行直後は公開状態）。
+  shareEnabled   Boolean         @default(true)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   members        Member[]
