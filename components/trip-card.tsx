@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatTripRange, tripDurationDays } from "@/lib/date-utils";
+import { packingProgress } from "@/lib/packing-progress";
+import { PackingProgressBar } from "@/components/packing-progress-bar";
 
 type Trip = {
   id: string;
@@ -11,9 +13,11 @@ type Trip = {
   memberCount: number;
   itineraryCount: number;
   packingCount: number;
+  packingCheckedCount: number;
 };
 
 export function TripCard({ trip }: { trip: Trip }) {
+  const progress = packingProgress(trip.packingCheckedCount, trip.packingCount);
   return (
     <Link href={`/trips/${trip.id}`} className="block group">
       <Card className="transition hover:border-foreground/40">
@@ -23,7 +27,7 @@ export function TripCard({ trip }: { trip: Trip }) {
             <p className="text-sm text-muted-foreground">{trip.destination}</p>
           )}
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground space-y-1">
+        <CardContent className="text-sm text-muted-foreground space-y-2">
           <p>
             {formatTripRange(trip.startDate, trip.endDate)}（
             {tripDurationDays(trip.startDate, trip.endDate)}日間）
@@ -32,6 +36,7 @@ export function TripCard({ trip }: { trip: Trip }) {
             メンバー {trip.memberCount}人 / 旅程 {trip.itineraryCount}件 / 持ち物{" "}
             {trip.packingCount}件
           </p>
+          {progress.total > 0 && <PackingProgressBar progress={progress} />}
         </CardContent>
       </Card>
     </Link>

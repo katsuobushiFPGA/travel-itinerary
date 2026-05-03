@@ -25,6 +25,21 @@ export default async function HomePage({
     },
   });
 
+  // 各 trip ごとの「チェック済み持ち物の件数」を 1 クエリで取り、Map に詰める。
+  // trips が空のときは groupBy を呼ばない（IN 空集合は SQLite で 0 行を返すが
+  // クエリ自体を省略する方が明示的）。
+  const checkedCountByTrip = new Map<string, number>();
+  if (trips.length > 0) {
+    const grouped = await prisma.packingItem.groupBy({
+      by: ["tripId"],
+      where: { tripId: { in: trips.map((t) => t.id) }, checked: true },
+      _count: { _all: true },
+    });
+    for (const g of grouped) {
+      checkedCountByTrip.set(g.tripId, g._count._all);
+    }
+  }
+
   const isFiltering = filter.q !== "" || filter.status !== "all";
 
   return (
@@ -63,6 +78,7 @@ export default async function HomePage({
                   memberCount: t._count.members,
                   itineraryCount: t._count.itineraryItems,
                   packingCount: t._count.packingItems,
+                  packingCheckedCount: checkedCountByTrip.get(t.id) ?? 0,
                 }}
               />
             ))}
