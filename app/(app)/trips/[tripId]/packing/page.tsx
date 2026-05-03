@@ -1,12 +1,15 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { PackingCheckbox } from "@/components/packing/packing-checkbox";
-import { DeletePackingButton } from "@/components/packing/delete-packing-button";
 import {
   CreatePackingItemDialog,
-  EditPackingItemDialog,
 } from "@/components/packing/packing-form";
 import { BulkAddPackingDialog } from "@/components/packing/packing-bulk-add-dialog";
+import {
+  PackingCategoryTable,
+  type PackingItem,
+} from "@/components/packing/packing-category-table";
+
+const UNCATEGORIZED_LABEL = "その他";
 
 export default async function PackingPage({
   params,
@@ -26,25 +29,31 @@ export default async function PackingPage({
   const total = items.length;
   const checkedCount = items.filter((item) => item.checked).length;
 
-  // カテゴリごとにグループ化（未設定は「その他」）
-  const grouped = new Map<string, typeof items>();
+  // category=null は別キー扱いとして Map に集約。表示時は「その他」ラベル + 末尾。
+  const grouped = new Map<string | null, PackingItem[]>();
   for (const item of items) {
-    const key = item.category ?? "その他";
-    if (!grouped.has(key)) {
-      grouped.set(key, []);
-    }
-    grouped.get(key)!.push(item);
+    const key = item.category;
+    const list = grouped.get(key) ?? [];
+    list.push(item);
+    grouped.set(key, list);
   }
 
-  // 「その他」を末尾に並び替え
-  const sortedGroups: [string, typeof items][] = [];
-  for (const [category, categoryItems] of grouped) {
-    if (category !== "その他") {
-      sortedGroups.push([category, categoryItems]);
+  const sortedGroups: Array<{
+    key: string | null;
+    label: string;
+    items: PackingItem[];
+  }> = [];
+  for (const [key, categoryItems] of grouped) {
+    if (key !== null) {
+      sortedGroups.push({ key, label: key, items: categoryItems });
     }
   }
-  if (grouped.has("その他")) {
-    sortedGroups.push(["その他", grouped.get("その他")!]);
+  if (grouped.has(null)) {
+    sortedGroups.push({
+      key: null,
+      label: UNCATEGORIZED_LABEL,
+      items: grouped.get(null)!,
+    });
   }
 
   return (
@@ -70,74 +79,16 @@ export default async function PackingPage({
         </div>
       ) : (
         <div className="space-y-6">
-          {sortedGroups.map(([category, categoryItems]) => (
-            <div key={category}>
+          {sortedGroups.map((g) => (
+            <div key={g.label}>
               <h3 className="text-sm font-medium text-muted-foreground mb-2 px-1">
-                {category}
+                {g.label}
               </h3>
-              <div className="rounded-lg border overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="w-10 p-2 text-center"></th>
-                      <th className="p-2 text-left font-medium">名前</th>
-                      <th className="p-2 text-center font-medium w-16">数量</th>
-                      <th className="p-2 text-left font-medium">担当者</th>
-                      <th className="p-2 text-right w-32"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categoryItems.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="border-b last:border-b-0 hover:bg-muted/30"
-                      >
-                        <td className="p-2 text-center">
-                          <PackingCheckbox
-                            itemId={item.id}
-                            tripId={tripId}
-                            checked={item.checked}
-                          />
-                        </td>
-                        <td className="p-2">
-                          <span
-                            className={
-                              item.checked
-                                ? "line-through text-muted-foreground"
-                                : ""
-                            }
-                          >
-                            {item.name}
-                          </span>
-                        </td>
-                        <td className="p-2 text-center text-muted-foreground">
-                          {item.quantity}
-                        </td>
-                        <td className="p-2 text-muted-foreground">
-                          {item.owner ?? ""}
-                        </td>
-                        <td className="p-2 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <EditPackingItemDialog
-                              itemId={item.id}
-                              defaults={{
-                                name: item.name,
-                                category: item.category,
-                                owner: item.owner,
-                                quantity: item.quantity,
-                              }}
-                            />
-                            <DeletePackingButton
-                              itemId={item.id}
-                              tripId={tripId}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <PackingCategoryTable
+                tripId={tripId}
+                categoryKey={g.key}
+                items={g.items}
+              />
             </div>
           ))}
         </div>

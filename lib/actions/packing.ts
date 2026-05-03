@@ -167,6 +167,47 @@ export async function createPackingItemsBulk(
   return { ok: true, created: result.count };
 }
 
+export async function reorderPackingItems(
+  tripId: string,
+  category: string | null,
+  orderedIds: string[],
+): Promise<FormState> {
+  if (!Array.isArray(orderedIds) || orderedIds.length === 0) {
+    return { ok: false, error: "並び替え対象がありません" };
+  }
+  if (new Set(orderedIds).size !== orderedIds.length) {
+    return { ok: false, error: "ID が重複しています" };
+  }
+
+  const items = await prisma.packingItem.findMany({
+    where: { tripId, category },
+    select: { id: true },
+  });
+  const existingIds = new Set(items.map((i) => i.id));
+  if (
+    existingIds.size !== orderedIds.length ||
+    orderedIds.some((id) => !existingIds.has(id))
+  ) {
+    return { ok: false, error: "対象アイテムの集合が一致しません" };
+  }
+
+  try {
+    await prisma.$transaction(
+      orderedIds.map((id, index) =>
+        prisma.packingItem.update({
+          // Prisma 5+ extendedWhereUnique。tripId 不一致は P2025 になり catch に流れる。
+          where: { id, tripId },
+          data: { sortOrder: index },
+        }),
+      ),
+    );
+  } catch {
+    return { ok: false, error: "並び替えの保存に失敗しました" };
+  }
+  revalidatePath(`/trips/${tripId}/packing`);
+  return { ok: true };
+}
+
 export async function deletePackingItem(
   itemId: string,
   tripId: string,
