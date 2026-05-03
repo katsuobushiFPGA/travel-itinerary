@@ -11,7 +11,7 @@
 - **旅程スケジュール**: 日別タイムライン。開始/終了時刻 (HH:mm) ・タイトル・場所・URL・メモ・マップ座標 (mapX/mapY)。各行のグリップハンドルから dnd-kit のドラッグで同一日内の並び替えに対応（並び順は `sortOrder` に保存）。
 - **持ち物リスト**: カテゴリ別グルーピング、担当者、数量、チェックボックスで荷造り状況を管理。
 - **サマリー**: しおり概要タブで参加メンバー/旅程/持ち物の件数を一望。
-- **共有しおり (`/s/<token>`)**: トークン発行で第三者と共有可能。フルブリードのカバー画像ヒーロー（カバー未設定時はアクセントグラデにフォールバック）+ タイムライン型アコーディオン + 日色分けの sticky マップ + NOW/NEXT 案内チップを備えたモバイル最適化ビュー。持ち物セクションは閲覧専用で `☑/□` のチェック状態と「X / Y 完了」進捗を表示する。`@media print` で全セクション展開＋マップ非表示の印刷スタイルに切り替わる。
+- **共有しおり (`/s/<token>`)**: トークン発行で第三者と共有可能。フルブリードのカバー画像ヒーロー（カバー未設定時はアクセントグラデにフォールバック）+ タイムライン型アコーディオン + 日色分けの sticky マップ + NOW/NEXT 案内チップを備えたモバイル最適化ビュー。持ち物セクションは閲覧専用で `☑/□` のチェック状態と「X / Y 完了」進捗を表示する。共有リンクは `公開停止 / 公開再開` トグルで URL を維持したまま閲覧を遮断でき、`URLを削除` で完全に無効化（再発行は別 URL）。`@media print` で全セクション展開＋マップ非表示の印刷スタイルに切り替わる。
 - **マップ座標エディタ**: 旅程アイテムごとに SVG プレビュー上をクリックしてピンを配置。共有しおり側のマップに反映され、ピンタップで対応する行へスクロールする。
 - **テキストで一括追加**: 旅程画面の「テキストで一括追加」ダイアログに `Day N` ヘッダ + `HH:MM[-HH:MM] タイトル @場所` 形式の複数行を貼り付けて、1 リクエストで最大 500 件まで作成。プレビューで件数とエラー行が見える。持ち物画面でも同様に `# カテゴリ名` ヘッダ + `名前 [xN|×N] [@担当者]` の複数行を貼り付け、最大 500 件まで一括追加できる。
 - **ロケーション autocomplete**: 旅程アイテムの「場所」入力で 2 文字以上タイプすると Nominatim (OpenStreetMap) を引いて候補を 5 件まで表示。↑↓ + Enter で選択。
@@ -105,7 +105,7 @@ departure/
 
 `prisma/schema.prisma` に 4 モデルを定義。`Trip` を親に `Member` / `ItineraryItem` / `PackingItem` が `onDelete: Cascade` で紐づく。
 
-- `Trip`: title / destination / startDate / endDate / memo / coverImage / dayCoverImages (JSON 文字列) / shareToken
+- `Trip`: title / destination / startDate / endDate / memo / coverImage / dayCoverImages (JSON 文字列) / shareToken / shareEnabled (公開停止フラグ)
 - `Member`: name / role / contact
 - `ItineraryItem`: dayIndex (1-origin) / startTime ("HH:mm") / endTime / title / location / url / note / mapX / mapY / sortOrder
 - `PackingItem`: name / category / owner / quantity / checked / sortOrder
