@@ -90,19 +90,53 @@ export async function deleteTrip(tripId: string) {
 
 export async function issueShareToken(tripId: string): Promise<FormState> {
   const token = generateShareToken();
-  await prisma.trip.update({
-    where: { id: tripId },
-    data: { shareToken: token },
-  });
+  try {
+    await prisma.trip.update({
+      where: { id: tripId },
+      data: { shareToken: token, shareEnabled: true },
+    });
+  } catch {
+    return { ok: false, error: "共有リンクの発行に失敗しました" };
+  }
+  revalidatePath(`/trips/${tripId}`, "layout");
+  return { ok: true };
+}
+
+export async function pauseShare(tripId: string): Promise<FormState> {
+  try {
+    await prisma.trip.update({
+      where: { id: tripId },
+      data: { shareEnabled: false },
+    });
+  } catch {
+    return { ok: false, error: "公開停止に失敗しました" };
+  }
+  revalidatePath(`/trips/${tripId}`, "layout");
+  return { ok: true };
+}
+
+export async function resumeShare(tripId: string): Promise<FormState> {
+  try {
+    await prisma.trip.update({
+      where: { id: tripId },
+      data: { shareEnabled: true },
+    });
+  } catch {
+    return { ok: false, error: "再公開に失敗しました" };
+  }
   revalidatePath(`/trips/${tripId}`, "layout");
   return { ok: true };
 }
 
 export async function revokeShareToken(tripId: string): Promise<FormState> {
-  await prisma.trip.update({
-    where: { id: tripId },
-    data: { shareToken: null },
-  });
+  try {
+    await prisma.trip.update({
+      where: { id: tripId },
+      data: { shareToken: null },
+    });
+  } catch {
+    return { ok: false, error: "URL の削除に失敗しました" };
+  }
   revalidatePath(`/trips/${tripId}`, "layout");
   return { ok: true };
 }

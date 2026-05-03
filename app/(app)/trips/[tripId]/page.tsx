@@ -46,7 +46,11 @@ export default async function TripOverviewPage({
         </CardContent>
       </Card>
       <div className="sm:col-span-2">
-        <ShareLinkCard tripId={trip.id} shareToken={trip.shareToken} />
+        <ShareLinkCard
+          tripId={trip.id}
+          shareToken={trip.shareToken}
+          shareEnabled={trip.shareEnabled}
+        />
       </div>
     </div>
   );

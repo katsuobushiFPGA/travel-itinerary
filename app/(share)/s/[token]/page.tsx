@@ -44,7 +44,7 @@ export default async function SharedBookletPage({
       },
     },
   });
-  if (!trip) notFound();
+  if (!trip || !trip.shareEnabled) notFound();
 
   const totalDays = tripDurationDays(trip.startDate, trip.endDate);
   const dayCoverImages = parseDayCoverImages(trip.dayCoverImages);
