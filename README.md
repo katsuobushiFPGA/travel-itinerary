@@ -8,7 +8,7 @@
 
 - **しおり (Trip) 管理**: 複数のしおりを作成・編集・削除。タイトル・目的地・期間・メモ・カバー画像・日別カバー画像を保持。
 - **参加メンバー**: メンバーの氏名・役割 (運転担当など)・連絡先を登録。
-- **旅程スケジュール**: 日別タイムライン。開始/終了時刻 (HH:mm) ・タイトル・場所・URL・メモ・マップ座標 (mapX/mapY)。
+- **旅程スケジュール**: 日別タイムライン。開始/終了時刻 (HH:mm) ・タイトル・場所・URL・メモ・マップ座標 (mapX/mapY)。各行のグリップハンドルから dnd-kit のドラッグで同一日内の並び替えに対応（並び順は `sortOrder` に保存）。
 - **持ち物リスト**: カテゴリ別グルーピング、担当者、数量、チェックボックスで荷造り状況を管理。
 - **サマリー**: しおり概要タブで参加メンバー/旅程/持ち物の件数を一望。
 - **共有しおり (`/s/<token>`)**: トークン発行で第三者と共有可能。フルブリードのカバー画像ヒーロー（カバー未設定時はアクセントグラデにフォールバック）+ タイムライン型アコーディオン + 日色分けの sticky マップ + NOW/NEXT 案内チップを備えたモバイル最適化ビュー。持ち物セクションは閲覧専用で `☑/□` のチェック状態と「X / Y 完了」進捗を表示する。`@media print` で全セクション展開＋マップ非表示の印刷スタイルに切り替わる。
@@ -121,6 +121,7 @@ departure/
 - **共有しおり (BookletV4)**: `app/(share)` 配下は専用ルートグループで、Yomogi / Kaisei Decol を Google Fonts CSS 経由で読み込む。`CoverHero` は `<img>` 背景 + 暗グラデオーバーレイで構成し、`@media print` 時にも `print-color-adjust: exact` でグラデを残す。アコーディオンは `max-height` 遷移 (0.36s)。ピンクリックでセクションを開いてから 380ms 待ってスクロール (transition 完了後)。`prefers-reduced-motion` は遅延 0ms に短絡。
 - **マップ座標系**: `mapX` ∈ [0, 100], `mapY` ∈ [0, 75]。`MapCoordPicker` は `preserveAspectRatio="xMidYMid meet"` のレターボックスを補正してクリック位置を SVG ユーザー座標に変換する。
 - **Nominatim 利用ポリシー**: `searchPlaces` Server Action は OSM Nominatim (1 req/s, User-Agent 必須) を呼ぶ。`LocationCombobox` は 350ms debounce + stale 応答破棄でクライアント側のリクエストを抑制している。さらにサーバ側で `TtlLruCache`（プロセスローカル、最大 256 クエリ・TTL 10 分）を持ち、同一クエリの再呼び出しを Nominatim まで届かせない。一過性のネットワークエラー応答はキャッシュせず次回再試行する。本番運用で同時利用者が増える場合は Vercel Runtime Cache などプロセス越境のキャッシュかセルフホスト Nominatim への切替を検討する。
+- **旅程の並び替え**: `app/(app)/trips/[tripId]/itinerary/page.tsx` の取得は `dayIndex → sortOrder → startTime → id` で並べる。新規追加時は `nextDaySortOrder` で同日の末尾値+1 を採番し、ドラッグ後はその日のアイテム全てを 0..N で再採番する Server Action `reorderItineraryItems` を呼ぶ。`ItineraryDayList` は楽観的更新 + 失敗時ロールバック、`useTransition` で pending 中の二重操作を抑制する。
 
 ## Agent Teams 実装ログ
 
@@ -147,5 +148,6 @@ npm test
 - `lib/__tests__/packing-parser.test.ts` : 持ち物の一括入力テキストパーサ
 - `lib/__tests__/places-cache.test.ts` : Nominatim 結果キャッシュ (TTL + LRU)
 - `lib/__tests__/places-actions.test.ts` : `searchPlaces` のキャッシュ・並行 dedup・エラー時挙動
+- `lib/__tests__/itinerary-reorder.test.ts` : `reorderItineraryItems` の入力検証・集合一致・$transaction 失敗時のフォールバック
 
 DB に触れる部分 (Prisma 呼び出し) は単体テスト対象外。`npm run dev` + ブラウザ、または Prisma Studio で検証する。
