@@ -5,6 +5,29 @@ import { CreateItineraryDialog } from "@/components/itinerary/itinerary-form";
 import { BulkAddItineraryDialog } from "@/components/itinerary/itinerary-bulk-add-dialog";
 import { ItineraryDaySection } from "@/components/itinerary/itinerary-day-section";
 
+function ExportLink({
+  tripId,
+  format,
+  label,
+  srLabel,
+}: {
+  tripId: string;
+  format: "ical" | "csv";
+  label: string;
+  srLabel: string;
+}) {
+  return (
+    <a
+      href={`/api/trips/${tripId}/export?format=${format}`}
+      aria-label={srLabel}
+      download
+      className="inline-flex h-8 items-center rounded-lg border border-input bg-transparent px-3 text-xs font-medium hover:bg-muted transition-colors"
+    >
+      {label}
+    </a>
+  );
+}
+
 export default async function ItineraryPage({
   params,
 }: {
@@ -29,7 +52,9 @@ export default async function ItineraryPage({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-end gap-2">
+        <ExportLink tripId={tripId} format="ical" label=".ics" srLabel="iCal形式でダウンロード" />
+        <ExportLink tripId={tripId} format="csv" label=".csv" srLabel="CSV形式でダウンロード" />
         <BulkAddItineraryDialog tripId={tripId} totalDays={totalDays} />
         <CreateItineraryDialog tripId={tripId} totalDays={totalDays} />
       </div>
