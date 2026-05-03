@@ -15,6 +15,7 @@
 - **マップ座標エディタ**: 旅程アイテムごとに SVG プレビュー上をクリックしてピンを配置。共有しおり側のマップに反映され、ピンタップで対応する行へスクロールする。
 - **テキストで一括追加**: 旅程画面の「テキストで一括追加」ダイアログに `Day N` ヘッダ + `HH:MM[-HH:MM] タイトル @場所` 形式の複数行を貼り付けて、1 リクエストで最大 500 件まで作成。プレビューで件数とエラー行が見える。持ち物画面でも同様に `# カテゴリ名` ヘッダ + `名前 [xN|×N] [@担当者]` の複数行を貼り付け、最大 500 件まで一括追加できる。
 - **ロケーション autocomplete**: 旅程アイテムの「場所」入力で 2 文字以上タイプすると Nominatim (OpenStreetMap) を引いて候補を 5 件まで表示。↑↓ + Enter で選択。
+- **エクスポート**: 旅程画面のヘッダから `.ics` (iCalendar) と `.csv` の 2 形式で旅程をダウンロード。iCal は floating time + 1 イベント=1 旅程アイテム、CSV は UTF-8 BOM 付き（Excel 互換）。`/api/trips/<tripId>/export?format=ical|csv` の Route Handler 経由。
 
 ## 技術スタック
 
@@ -150,6 +151,9 @@ npm test
 - `lib/__tests__/places-actions.test.ts` : `searchPlaces` のキャッシュ・並行 dedup・エラー時挙動
 - `lib/__tests__/itinerary-reorder.test.ts` : `reorderItineraryItems` の入力検証・集合一致・$transaction 失敗時のフォールバック
 - `lib/__tests__/packing-reorder.test.ts` : `reorderPackingItems` の同等チェック（カテゴリ単位）
+- `lib/__tests__/itinerary-ical.test.ts` : iCal エクスポートの整形・URL インジェクション防止
+- `lib/__tests__/itinerary-csv.test.ts` : CSV エクスポートの quote/escape
+- `lib/__tests__/export-route.test.ts` : `/api/trips/[tripId]/export` の Route Handler
 - `lib/__tests__/trip-filter.test.ts` : Trip 一覧の検索・status 絞り込みヘルパ
 - `lib/__tests__/share-toggle.test.ts` : `pauseShare` / `resumeShare` の正常系・例外系
 - `lib/__tests__/packing-progress.test.ts` : 進捗計算の純関数（クランプ・四捨五入・完了判定）
